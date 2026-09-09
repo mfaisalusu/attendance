@@ -1,0 +1,9 @@
+[
+    { "id": 1, "code": "TI-A", "name": "Teknik Informatika A" },
+    { "id": 2, "code": "TI-B", "name": "Teknik Informatika B" },
+    { "id": 3, "code": "TI-C", "name": "Teknik Informatika C" },
+    { "id": 4, "code": "SI-A", "name": "Sistem Informasi A" },
+    { "id": 5, "code": "SI-B", "name": "Sistem Informasi B" },
+    { "id": 6, "code": "MI-A", "name": "Manajemen Informatika A" },
+    { "id": 7, "code": "TK-A", "name": "Teknik Komputer A" }
+]
