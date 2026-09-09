@@ -15,7 +15,7 @@
         <button class="modal-close" on:click={() => !loading && (visible = false)} aria-label="Tutup">✕</button>
       </div>
       <div class="modal-body">
-        <p>{message}</p>
+        <p>{@html message}</p>
       </div>
       <div class="modal-footer">
         <button class="btn btn-secondary" on:click={() => visible = false} disabled={loading}>Batal</button>

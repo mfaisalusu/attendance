@@ -101,6 +101,7 @@ class AuthController extends BaseController
                     ],
                     'Login berhasil. (development mode — OTP dilewati)'
                 );
+                return;
             }
 
             // Production: arahkan frontend ke halaman verify-2fa

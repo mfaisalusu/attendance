@@ -1,6 +1,8 @@
 [
-    { "id": 1, "code": "TI",  "name": "Teknik Informatika" },
-    { "id": 2, "code": "SI",  "name": "Sistem Informasi" },
-    { "id": 3, "code": "MI",  "name": "Manajemen Informatika" },
-    { "id": 4, "code": "TK",  "name": "Teknik Komputer" }
+    {
+        "id": 2,
+        "user_id": 1,
+        "code": "SI",
+        "name": "Sistem Informasi"
+    }
 ]

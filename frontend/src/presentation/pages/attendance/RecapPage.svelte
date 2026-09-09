@@ -16,21 +16,21 @@
   let classId      = '';
   let semesterId   = '';
 
-  let departments = [], courses = [], classes = [], semesters = [];
+  let departments = [], courses = [], classes = [], semesters = [], years = [];
   let recapData = null;
   let loading = false;
   let error = '';
   let hasSearched = false;
 
-  const years = Array.from({ length: 5 }, (_, i) => currentYear - i);
   const months = Array.from({ length: 12 }, (_, i) => ({ value: i + 1, label: monthName(i + 1) }));
 
   onMount(async () => {
-    [departments, courses, classes, semesters] = await Promise.all([
+    [departments, courses, classes, semesters, years] = await Promise.all([
       masterService.getDepartments(),
       masterService.getCourses(),
       masterService.getClasses(),
       masterService.getSemesters(),
+      masterService.getYears(),
     ]);
   });
 
@@ -75,7 +75,7 @@
     <div class="form-group">
       <label for="r-year">Tahun</label>
       <select id="r-year" class="form-control" bind:value={year}>
-        {#each years as y}<option value={y}>{y}</option>{/each}
+        {#each years as y}<option value={y.id}>{y.name}</option>{/each}
       </select>
     </div>
     <div class="form-group">

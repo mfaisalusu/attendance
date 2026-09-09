@@ -10,6 +10,7 @@
   import StudentsPage   from '../presentation/pages/students/StudentsPage.svelte';
   import AttendancePage from '../presentation/pages/attendance/AttendancePage.svelte';
   import RecapPage      from '../presentation/pages/attendance/RecapPage.svelte';
+  import MasterDataPage from '../presentation/pages/master/MasterDataPage.svelte';
 
   // Public routes (no auth needed)
   const publicRoutes = ['/login', '/register', '/verify-2fa'];
@@ -72,6 +73,8 @@
   <RecapPage />
 {:else if normPath === '/attendance'}
   <AttendancePage />
+{:else if normPath.startsWith('/master')}
+  <MasterDataPage />
 {:else}
   <!-- 404 fallback -->
   <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;gap:16px">

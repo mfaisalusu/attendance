@@ -20,10 +20,29 @@ $router->get( '/api/auth/me',         [new App\Presentation\Controllers\AuthCont
 // ----------------------------------------------------------------
 $masterController = new App\Presentation\Controllers\MasterController();
 
-$router->get('/api/master/departments', [$masterController, 'departments'], $auth);
-$router->get('/api/master/courses',     [$masterController, 'courses'],     $auth);
-$router->get('/api/master/classes',     [$masterController, 'classes'],     $auth);
-$router->get('/api/master/semesters',   [$masterController, 'semesters'],   $auth);
+// Years (read-only, generated dynamically)
+$router->get('/api/master/years',   [$masterController, 'years'],   $auth);
+
+// Departments CRUD
+$router->get(   '/api/master/departments',      [$masterController, 'departments'],      $auth);
+$router->post(  '/api/master/departments',      [$masterController, 'storeDepartment'],  $auth);
+$router->put(   '/api/master/departments/{id}', [$masterController, 'updateDepartment'], $auth);
+$router->delete('/api/master/departments/{id}', [$masterController, 'destroyDepartment'],$auth);
+
+// Courses CRUD
+$router->get(   '/api/master/courses',      [$masterController, 'courses'],      $auth);
+$router->post(  '/api/master/courses',      [$masterController, 'storeCourse'],  $auth);
+$router->put(   '/api/master/courses/{id}', [$masterController, 'updateCourse'], $auth);
+$router->delete('/api/master/courses/{id}', [$masterController, 'destroyCourse'],$auth);
+
+// Classes CRUD
+$router->get(   '/api/master/classes',      [$masterController, 'classes'],      $auth);
+$router->post(  '/api/master/classes',      [$masterController, 'storeClass'],   $auth);
+$router->put(   '/api/master/classes/{id}', [$masterController, 'updateClass'],  $auth);
+$router->delete('/api/master/classes/{id}', [$masterController, 'destroyClass'], $auth);
+
+// Semesters (read-only, fixed 1–8)
+$router->get('/api/master/semesters', [$masterController, 'semesters'], $auth);
 
 // ----------------------------------------------------------------
 // Student routes (protected)

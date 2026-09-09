@@ -2,15 +2,16 @@
   export let currentPath = '/';
 
   const navItems = [
-    { path: '/dashboard',        label: 'Dashboard',       icon: '🏠' },
-    { path: '/students',         label: 'Mahasiswa',       icon: '👥' },
-    { path: '/attendance',       label: 'Absensi',         icon: '✅' },
-    { path: '/attendance/recap', label: 'Rekap Absensi',   icon: '📊' },
+    { path: '/dashboard',        label: 'Dashboard',       icon: '🏠',  exact: true  },
+    { path: '/students',         label: 'Mahasiswa',       icon: '👥',  exact: false },
+    { path: '/attendance',       label: 'Absensi',         icon: '✅',  exact: true  },
+    { path: '/attendance/recap', label: 'Rekap Absensi',   icon: '📊',  exact: false },
+    { path: '/master',           label: 'Master Data',     icon: '🗂️',  exact: false },
   ];
 
-  function isActive(path) {
-    if (path === '/dashboard') return currentPath === '/dashboard';
-    return currentPath.startsWith(path);
+  function isActive(item) {
+    if (item.exact) return currentPath === item.path;
+    return currentPath.startsWith(item.path);
   }
 </script>
 
@@ -25,11 +26,14 @@
       <a
         href={item.path}
         class="nav-item"
-        class:active={isActive(item.path)}
-        aria-current={isActive(item.path) ? 'page' : undefined}
+        class:active={isActive(item)}
+        aria-current={isActive(item) ? 'page' : undefined}
       >
         <span class="nav-icon" aria-hidden="true">{item.icon}</span>
-        <span>{item.label}</span>
+        <span class="nav-label">{item.label}</span>
+        {#if isActive(item)}
+          <span class="active-dot" aria-hidden="true"></span>
+        {/if}
       </a>
     {/each}
   </nav>
@@ -49,16 +53,38 @@
   }
   .brand-icon { font-size: 1.4rem; }
   .sidebar-nav { padding: 12px 0; flex: 1; }
+
   .nav-item {
     display: flex; align-items: center; gap: 10px;
     padding: 10px 16px; color: var(--gray-400);
     font-size: .875rem; font-weight: 500;
-    transition: background .15s, color .15s;
-    text-decoration: none; border-radius: 0;
+    transition: background .15s, color .15s, border-color .15s;
+    text-decoration: none;
+    border-left: 3px solid transparent;
+    position: relative;
   }
-  .nav-item:hover { background: rgba(255,255,255,.06); color: var(--white); text-decoration: none; }
-  .nav-item.active { background: var(--primary); color: var(--white); }
-  .nav-icon { font-size: 1rem; width: 20px; text-align: center; }
+  .nav-item:hover {
+    background: rgba(255,255,255,.06);
+    color: var(--white);
+    text-decoration: none;
+  }
+  .nav-item.active {
+    background: rgba(59, 130, 246, .18);
+    color: var(--white);
+    border-left-color: var(--primary);
+    font-weight: 600;
+  }
+
+  .nav-icon { font-size: 1rem; width: 20px; text-align: center; flex-shrink: 0; }
+  .nav-label { flex: 1; }
+
+  /* Dot indikator di kanan */
+  .active-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--primary);
+    flex-shrink: 0;
+  }
 
   @media (max-width: 768px) {
     .sidebar { display: none; }

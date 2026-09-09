@@ -30,18 +30,13 @@ class ListStudentsUseCase
         );
 
         // Enrich each student with master labels
-        $items = array_map(function (object $student) {
+        $items = array_map(function (object $student) use ($userId) {
             $data = $student->toArray();
 
-            $dept   = $this->masterRepository->findDepartmentById($student->departmentId);
-            $course = $this->masterRepository->findCourseById($student->courseId);
-            $class  = $this->masterRepository->findClassById($student->classId);
-            $sem    = $this->masterRepository->findSemesterById($student->semesterId);
-
-            $data['department'] = $dept?->toArray();
-            $data['course']     = $course?->toArray();
-            $data['class']      = $class?->toArray();
-            $data['semester']   = $sem?->toArray();
+            $data['department'] = $this->masterRepository->findDepartmentById($student->departmentId, $userId)?->toArray();
+            $data['course']     = $this->masterRepository->findCourseById($student->courseId, $userId)?->toArray();
+            $data['class']      = $this->masterRepository->findClassById($student->classId, $userId)?->toArray();
+            $data['semester']   = $this->masterRepository->findSemesterById($student->semesterId)?->toArray();
 
             return $data;
         }, $result['items']);

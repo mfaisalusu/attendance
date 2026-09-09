@@ -1,9 +1,18 @@
 [
-    { "id": 1, "code": "TI-A", "name": "Teknik Informatika A" },
-    { "id": 2, "code": "TI-B", "name": "Teknik Informatika B" },
-    { "id": 3, "code": "TI-C", "name": "Teknik Informatika C" },
-    { "id": 4, "code": "SI-A", "name": "Sistem Informasi A" },
-    { "id": 5, "code": "SI-B", "name": "Sistem Informasi B" },
-    { "id": 6, "code": "MI-A", "name": "Manajemen Informatika A" },
-    { "id": 7, "code": "TK-A", "name": "Teknik Komputer A" }
+    {
+        "id": 1,
+        "user_id": 1,
+        "code": "SI-26-4",
+        "name": "Sistem Informasi",
+        "semester_id": 4,
+        "year": 2026
+    },
+    {
+        "id": 2,
+        "user_id": 1,
+        "code": "SI-26-7",
+        "name": "Sistem Informasi",
+        "semester_id": 7,
+        "year": 2026
+    }
 ]

@@ -8,11 +8,27 @@ export const ENDPOINTS = {
   logout:     `${API_BASE}/auth/logout`,
   me:         `${API_BASE}/auth/me`,
 
-  // Master
+  // Master — read
+  years:       `${API_BASE}/master/years`,
   departments: `${API_BASE}/master/departments`,
   courses:     `${API_BASE}/master/courses`,
   classes:     `${API_BASE}/master/classes`,
   semesters:   `${API_BASE}/master/semesters`,
+
+  // Master — write (departments)
+  departmentStore:   `${API_BASE}/master/departments`,
+  departmentUpdate:  (id) => `${API_BASE}/master/departments/${id}`,
+  departmentDestroy: (id) => `${API_BASE}/master/departments/${id}`,
+
+  // Master — write (courses)
+  courseStore:   `${API_BASE}/master/courses`,
+  courseUpdate:  (id) => `${API_BASE}/master/courses/${id}`,
+  courseDestroy: (id) => `${API_BASE}/master/courses/${id}`,
+
+  // Master — write (classes)
+  classStore:   `${API_BASE}/master/classes`,
+  classUpdate:  (id) => `${API_BASE}/master/classes/${id}`,
+  classDestroy: (id) => `${API_BASE}/master/classes/${id}`,
 
   // Students
   students:    `${API_BASE}/students`,

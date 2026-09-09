@@ -1,12 +1,20 @@
 [
-    { "id": 1,  "code": "IF101", "name": "Pemrograman Web" },
-    { "id": 2,  "code": "IF102", "name": "Basis Data" },
-    { "id": 3,  "code": "IF103", "name": "Pemrograman Berorientasi Objek" },
-    { "id": 4,  "code": "IF104", "name": "Struktur Data dan Algoritma" },
-    { "id": 5,  "code": "IF105", "name": "Jaringan Komputer" },
-    { "id": 6,  "code": "IF106", "name": "Kecerdasan Buatan" },
-    { "id": 7,  "code": "IF107", "name": "Rekayasa Perangkat Lunak" },
-    { "id": 8,  "code": "IF108", "name": "Sistem Operasi" },
-    { "id": 9,  "code": "IF109", "name": "Matematika Diskrit" },
-    { "id": 10, "code": "IF110", "name": "Keamanan Sistem Informasi" }
+    {
+        "id": 9,
+        "user_id": 1,
+        "code": "SI63104",
+        "name": "Teknologi Blockchain"
+    },
+    {
+        "id": 10,
+        "user_id": 1,
+        "code": "SI63018",
+        "name": "Bisnis Digital"
+    },
+    {
+        "id": 11,
+        "user_id": 1,
+        "code": "-",
+        "name": "Literasi Digital"
+    }
 ]

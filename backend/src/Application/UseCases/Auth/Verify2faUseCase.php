@@ -48,8 +48,15 @@ class Verify2faUseCase
             throw new RuntimeException('Terlalu banyak percobaan. Silakan login ulang untuk mendapatkan kode baru.');
         }
 
-        // Increment attempt count before verifying (prevents brute-force)
+        // Increment attempt SEBELUM verify untuk mencegah brute-force.
+        // Setelah increment, jika total attempts sudah >= MAX, tolak langsung
+        // tanpa memberi tahu apakah kode benar — memastikan attempt ke-MAX
+        // adalah percobaan terakhir yang diizinkan, bukan ke-(MAX+1).
         $this->otpRepository->incrementAttempts($otpToken->id);
+
+        if (($otpToken->attempts + 1) >= self::MAX_ATTEMPTS && !password_verify($dto->token, $otpToken->tokenHash)) {
+            throw new RuntimeException('Terlalu banyak percobaan. Silakan login ulang untuk mendapatkan kode baru.');
+        }
 
         if (!password_verify($dto->token, $otpToken->tokenHash)) {
             throw new RuntimeException('Kode verifikasi tidak valid.');

@@ -10,7 +10,7 @@ use App\Application\UseCases\Student\DeleteStudentUseCase;
 use App\Application\UseCases\Student\GetStudentUseCase;
 use App\Application\UseCases\Student\ListStudentsUseCase;
 use App\Application\UseCases\Student\UpdateStudentUseCase;
-use App\Infrastructure\Repositories\JsonMasterRepository;
+use App\Infrastructure\Repositories\DatabaseMasterRepository;
 use App\Infrastructure\Repositories\StudentRepository;
 use App\Presentation\Requests\Request;
 use App\Presentation\Requests\Validator;
@@ -39,7 +39,7 @@ class StudentController extends BaseController
         try {
             $useCase = new ListStudentsUseCase(
                 new StudentRepository(),
-                new JsonMasterRepository(),
+                new DatabaseMasterRepository(),
             );
 
             $result = $useCase->execute(
@@ -64,7 +64,7 @@ class StudentController extends BaseController
         try {
             $useCase = new GetStudentUseCase(
                 new StudentRepository(),
-                new JsonMasterRepository(),
+                new DatabaseMasterRepository(),
             );
 
             $data = $useCase->execute($studentId, $userId);
@@ -99,7 +99,10 @@ class StudentController extends BaseController
         }
 
         try {
-            $useCase = new CreateStudentUseCase(new StudentRepository());
+            $useCase = new CreateStudentUseCase(
+                new StudentRepository(),
+                new DatabaseMasterRepository(),
+            );
             $student = $useCase->execute($userId, new StudentDTO(
                 nip:          $data['nip'],
                 name:         $data['name'],
@@ -111,7 +114,7 @@ class StudentController extends BaseController
 
             JsonResponse::created($student, 'Mahasiswa berhasil ditambahkan.');
         } catch (InvalidArgumentException $e) {
-            JsonResponse::unprocessable(['nip' => [$e->getMessage()]]);
+            JsonResponse::unprocessable(['general' => [$e->getMessage()]]);
         } catch (Throwable) {
             JsonResponse::error('Gagal menambahkan mahasiswa.', 500);
         }
@@ -141,7 +144,10 @@ class StudentController extends BaseController
         }
 
         try {
-            $useCase = new UpdateStudentUseCase(new StudentRepository());
+            $useCase = new UpdateStudentUseCase(
+                new StudentRepository(),
+                new DatabaseMasterRepository(),
+            );
             $student = $useCase->execute($studentId, $userId, new StudentDTO(
                 nip:          $data['nip'],
                 name:         $data['name'],
@@ -153,7 +159,7 @@ class StudentController extends BaseController
 
             JsonResponse::success($student, 'Data mahasiswa berhasil diperbarui.');
         } catch (InvalidArgumentException $e) {
-            JsonResponse::unprocessable(['nip' => [$e->getMessage()]]);
+            JsonResponse::unprocessable(['general' => [$e->getMessage()]]);
         } catch (RuntimeException $e) {
             JsonResponse::notFound($e->getMessage());
         } catch (Throwable) {
