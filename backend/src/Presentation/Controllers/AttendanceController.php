@@ -20,161 +20,81 @@ use Throwable;
 
 class AttendanceController extends BaseController
 {
-    // ------------------------------------------------------------------
     // GET /api/attendance
-    // Query: date, department_id, course_id, class_id, semester_id
-    // ------------------------------------------------------------------
     public function index(Request $request): void
     {
-        $userId = $this->authUserId();
-        $date   = $request->query('date') ?? date('Y-m-d');
-
-        $departmentId = $this->optionalInt($request, 'department_id');
-        $courseId     = $this->optionalInt($request, 'course_id');
-        $classId      = $this->optionalInt($request, 'class_id');
-        $semesterId   = $this->optionalInt($request, 'semester_id');
+        $userId  = $this->authUserId();
+        $date    = $request->query('date') ?? date('Y-m-d');
+        $classId = $this->optInt($request, 'class_id');
 
         try {
-            $useCase = new GetAttendanceUseCase(
-                new AttendanceRepository(),
-                new StudentRepository(),
-            );
-
-            $result = $useCase->execute(
-                $userId, $date, $departmentId, $courseId, $classId, $semesterId
-            );
-
+            $result = (new GetAttendanceUseCase(new AttendanceRepository(), new StudentRepository()))
+                ->execute($userId, $date, $classId);
             JsonResponse::success($result);
-        } catch (Throwable) {
-            JsonResponse::error('Gagal memuat data absensi.', 500);
-        }
+        } catch (Throwable) { JsonResponse::error('Gagal memuat data absensi.', 500); }
     }
 
-    // ------------------------------------------------------------------
     // POST /api/attendance
-    // Body: { date, attendance: [{student_id, status}] }
-    // ------------------------------------------------------------------
     public function store(Request $request): void
     {
-        $userId    = $this->authUserId();
-        $data      = $request->all();
-        $validator = new Validator();
-
-        $valid = $validator->validate($data, [
-            'date'       => 'required|date',
-            'attendance' => 'required|array',
-        ]);
-
-        if (!$valid) {
-            JsonResponse::unprocessable($validator->errors());
+        $userId = $this->authUserId();
+        $data   = $request->all();
+        $v      = new Validator();
+        if (!$v->validate($data, ['date' => 'required|date', 'attendance' => 'required|array'])) {
+            JsonResponse::unprocessable($v->errors());
         }
-
         try {
-            $useCase = new SaveAttendanceUseCase(
-                new AttendanceRepository(),
-                new StudentRepository(),
-            );
-
-            $useCase->execute($userId, new AttendanceDTO(
-                date:       $data['date'],
-                attendance: $data['attendance'],
-            ));
-
+            (new SaveAttendanceUseCase(new AttendanceRepository(), new StudentRepository()))
+                ->execute($userId, new AttendanceDTO(date: $data['date'], attendance: $data['attendance']));
             JsonResponse::success(null, 'Absensi berhasil disimpan.');
-        } catch (InvalidArgumentException $e) {
-            JsonResponse::unprocessable(['attendance' => [$e->getMessage()]]);
-        } catch (RuntimeException $e) {
-            JsonResponse::error($e->getMessage(), 500);
-        } catch (Throwable) {
-            JsonResponse::error('Gagal menyimpan absensi.', 500);
-        }
+        } catch (InvalidArgumentException $e) { JsonResponse::unprocessable(['attendance' => [$e->getMessage()]]); }
+        catch (RuntimeException $e)           { JsonResponse::error($e->getMessage(), 500); }
+        catch (Throwable)                     { JsonResponse::error('Gagal menyimpan absensi.', 500); }
     }
 
-    // ------------------------------------------------------------------
     // PUT /api/attendance/{id}
-    // Body: { status }
-    // ------------------------------------------------------------------
     public function update(Request $request): void
     {
         $userId       = $this->authUserId();
         $attendanceId = (int) $request->param('id');
         $data         = $request->all();
-        $validator    = new Validator();
-
-        $valid = $validator->validate($data, [
-            'status' => 'required|in:hadir,izin,sakit,alpha',
-        ]);
-
-        if (!$valid) {
-            JsonResponse::unprocessable($validator->errors());
+        $v            = new Validator();
+        if (!$v->validate($data, ['status' => 'required|in:hadir,izin,sakit,alpha'])) {
+            JsonResponse::unprocessable($v->errors());
         }
-
         try {
-            $useCase = new UpdateAttendanceUseCase(new AttendanceRepository());
-            $result  = $useCase->execute($attendanceId, $userId, $data['status']);
-
+            $result = (new UpdateAttendanceUseCase(new AttendanceRepository()))
+                ->execute($attendanceId, $userId, $data['status']);
             JsonResponse::success($result, 'Absensi berhasil diperbarui.');
-        } catch (InvalidArgumentException $e) {
-            JsonResponse::unprocessable(['status' => [$e->getMessage()]]);
-        } catch (RuntimeException $e) {
-            JsonResponse::notFound($e->getMessage());
-        } catch (Throwable) {
-            JsonResponse::error('Gagal memperbarui absensi.', 500);
-        }
+        } catch (InvalidArgumentException $e) { JsonResponse::unprocessable(['status' => [$e->getMessage()]]); }
+        catch (RuntimeException $e)           { JsonResponse::notFound($e->getMessage()); }
+        catch (Throwable)                     { JsonResponse::error('Gagal memperbarui absensi.', 500); }
     }
 
-    // ------------------------------------------------------------------
     // GET /api/attendance/recap
-    // Query: year, month, department_id, course_id, class_id, semester_id
-    // ------------------------------------------------------------------
     public function recap(Request $request): void
     {
-        $userId    = $this->authUserId();
-        $validator = new Validator();
-
-        $params = [
-            'year'  => $request->query('year'),
-            'month' => $request->query('month'),
-        ];
-
-        $valid = $validator->validate($params, [
-            'year'  => 'required|integer',
-            'month' => 'required|integer',
-        ]);
-
-        if (!$valid) {
-            JsonResponse::unprocessable($validator->errors());
+        $userId  = $this->authUserId();
+        $v       = new Validator();
+        $params  = ['year' => $request->query('year'), 'month' => $request->query('month')];
+        if (!$v->validate($params, ['year' => 'required|integer', 'month' => 'required|integer'])) {
+            JsonResponse::unprocessable($v->errors());
         }
-
-        $year         = (int) $params['year'];
-        $month        = (int) $params['month'];
-        $departmentId = $this->optionalInt($request, 'department_id');
-        $courseId     = $this->optionalInt($request, 'course_id');
-        $classId      = $this->optionalInt($request, 'class_id');
-        $semesterId   = $this->optionalInt($request, 'semester_id');
-
+        $year  = (int) $params['year'];
+        $month = (int) $params['month'];
         if ($month < 1 || $month > 12) {
             JsonResponse::unprocessable(['month' => ['Bulan harus antara 1 dan 12.']]);
         }
+        $classId = $this->optInt($request, 'class_id');
 
         try {
-            $useCase = new MonthlyRecapUseCase(new AttendanceRepository());
-            $result  = $useCase->execute(
-                $userId, $year, $month,
-                $departmentId, $courseId, $classId, $semesterId
-            );
-
+            $result = (new MonthlyRecapUseCase(new AttendanceRepository()))
+                ->execute($userId, $year, $month, $classId);
             JsonResponse::success($result);
-        } catch (Throwable) {
-            JsonResponse::error('Gagal memuat rekap absensi.', 500);
-        }
+        } catch (Throwable) { JsonResponse::error('Gagal memuat rekap absensi.', 500); }
     }
 
-    // ------------------------------------------------------------------
-    // Helpers
-    // ------------------------------------------------------------------
-
-    private function optionalInt(Request $request, string $key): ?int
+    private function optInt(Request $request, string $key): ?int
     {
         $val = $request->query($key);
         return ($val !== null && $val !== '') ? (int) $val : null;

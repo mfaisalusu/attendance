@@ -18,18 +18,10 @@ class GetStudentUseCase
     public function execute(int $id, int $userId): array
     {
         $student = $this->studentRepository->findById($id, $userId);
+        if ($student === null) throw new RuntimeException('Mahasiswa tidak ditemukan.');
 
-        if ($student === null) {
-            throw new RuntimeException('Mahasiswa tidak ditemukan.');
-        }
-
-        $data = $student->toArray();
-
-        $data['department'] = $this->masterRepository->findDepartmentById($student->departmentId, $userId)?->toArray();
-        $data['course']     = $this->masterRepository->findCourseById($student->courseId, $userId)?->toArray();
-        $data['class']      = $this->masterRepository->findClassById($student->classId, $userId)?->toArray();
-        $data['semester']   = $this->masterRepository->findSemesterById($student->semesterId)?->toArray();
-
+        $data          = $student->toArray();
+        $data['class'] = $this->masterRepository->findClassById($student->classId, $userId)?->toArray();
         return $data;
     }
 }

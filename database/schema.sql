@@ -42,8 +42,6 @@ CREATE TABLE IF NOT EXISTS `otp_tokens` (
 
 -- ============================================================
 -- Master Data Tables
--- Setiap tabel master terikat ke user (dosen) pemiliknya.
--- Semester tidak memerlukan tabel — nilainya fixed 1–8.
 -- ============================================================
 
 -- ------------------------------------------------------------
@@ -63,69 +61,82 @@ CREATE TABLE IF NOT EXISTS `departments` (
 
 -- ------------------------------------------------------------
 -- Table: courses (Mata Kuliah)
+-- Setiap mata kuliah milik satu jurusan.
+-- Kode digenerate otomatis: {dept_code}-{inisial_nama}
 -- ------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS `courses` (
-    `id`         INT UNSIGNED    NOT NULL AUTO_INCREMENT,
-    `user_id`    INT UNSIGNED    NOT NULL,
-    `code`       VARCHAR(20)     NOT NULL,
-    `name`       VARCHAR(150)    NOT NULL,
-    `created_at` DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    `updated_at` DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    `id`            INT UNSIGNED    NOT NULL AUTO_INCREMENT,
+    `user_id`       INT UNSIGNED    NOT NULL,
+    `department_id` INT UNSIGNED    NOT NULL,
+    `code`          VARCHAR(20)     NOT NULL,
+    `name`          VARCHAR(150)    NOT NULL,
+    `created_at`    DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `updated_at`    DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (`id`),
-    KEY `idx_course_user_id` (`user_id`),
-    CONSTRAINT `fk_course_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+    KEY `idx_course_user_id`  (`user_id`),
+    KEY `idx_course_dept_id`  (`department_id`),
+    CONSTRAINT `fk_course_user` FOREIGN KEY (`user_id`)       REFERENCES `users`       (`id`) ON DELETE CASCADE,
+    CONSTRAINT `fk_course_dept` FOREIGN KEY (`department_id`) REFERENCES `departments` (`id`) ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ------------------------------------------------------------
 -- Table: classes (Kelas)
--- Menyimpan semester_id (1–8) dan tahun akademik.
+-- Setiap kelas milik satu jurusan, satu semester, satu tahun.
+-- Kode digenerate otomatis: {dept_code}-SEM-{semester}-{year}
 -- ------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS `classes` (
-    `id`          INT UNSIGNED        NOT NULL AUTO_INCREMENT,
-    `user_id`     INT UNSIGNED        NOT NULL,
-    `code`        VARCHAR(20)         NOT NULL,
-    `name`        VARCHAR(100)        NOT NULL,
-    `semester_id` TINYINT UNSIGNED    NOT NULL COMMENT '1–8',
-    `year`        SMALLINT UNSIGNED   NOT NULL COMMENT 'Tahun akademik, mulai 2026',
-    `created_at`  DATETIME            NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    `updated_at`  DATETIME            NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    `id`            INT UNSIGNED        NOT NULL AUTO_INCREMENT,
+    `user_id`       INT UNSIGNED        NOT NULL,
+    `department_id` INT UNSIGNED        NOT NULL,
+    `code`          VARCHAR(30)         NOT NULL,
+    `name`          VARCHAR(100)        NOT NULL,
+    `semester_id`   TINYINT UNSIGNED    NOT NULL COMMENT '1–8',
+    `year`          SMALLINT UNSIGNED   NOT NULL COMMENT 'Tahun akademik, mulai 2026',
+    `created_at`    DATETIME            NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `updated_at`    DATETIME            NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (`id`),
     KEY `idx_class_user_id`   (`user_id`),
+    KEY `idx_class_dept_id`   (`department_id`),
     KEY `idx_class_semester`  (`semester_id`),
     KEY `idx_class_year`      (`year`),
-    CONSTRAINT `fk_class_user`     FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+    CONSTRAINT `fk_class_user`      FOREIGN KEY (`user_id`)       REFERENCES `users`       (`id`) ON DELETE CASCADE,
+    CONSTRAINT `fk_class_dept`      FOREIGN KEY (`department_id`) REFERENCES `departments` (`id`) ON DELETE RESTRICT,
     CONSTRAINT `chk_semester_range` CHECK (`semester_id` BETWEEN 1 AND 8),
     CONSTRAINT `chk_year_min`       CHECK (`year` >= 2026)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ------------------------------------------------------------
+-- Table: class_courses (Pivot — Kelas ↔ Mata Kuliah, many-to-many)
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS `class_courses` (
+    `class_id`  INT UNSIGNED NOT NULL,
+    `course_id` INT UNSIGNED NOT NULL,
+    PRIMARY KEY (`class_id`, `course_id`),
+    KEY `idx_cc_course_id` (`course_id`),
+    CONSTRAINT `fk_cc_class`  FOREIGN KEY (`class_id`)  REFERENCES `classes` (`id`) ON DELETE CASCADE,
+    CONSTRAINT `fk_cc_course` FOREIGN KEY (`course_id`) REFERENCES `courses` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ------------------------------------------------------------
 -- Table: students
--- department_id, course_id, class_id sekarang merujuk ke tabel
--- master di atas. semester_id tetap integer langsung (1–8).
+-- Mahasiswa hanya terikat ke kelas (class_id).
+-- Jurusan, mata kuliah, dan semester diambil dari kelas.
 -- ------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS `students` (
-    `id`            INT UNSIGNED        NOT NULL AUTO_INCREMENT,
-    `user_id`       INT UNSIGNED        NOT NULL,
-    `nip`           VARCHAR(30)         NOT NULL,
-    `name`          VARCHAR(100)        NOT NULL,
-    `department_id` INT UNSIGNED        NOT NULL,
-    `course_id`     INT UNSIGNED        NOT NULL,
-    `class_id`      INT UNSIGNED        NOT NULL,
-    `semester_id`   TINYINT UNSIGNED    NOT NULL COMMENT '1–8',
-    `created_at`    DATETIME            NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    `updated_at`    DATETIME            NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    `id`         INT UNSIGNED    NOT NULL AUTO_INCREMENT,
+    `user_id`    INT UNSIGNED    NOT NULL,
+    `nip`        VARCHAR(30)     NOT NULL,
+    `name`       VARCHAR(100)    NOT NULL,
+    `class_id`   INT UNSIGNED    NOT NULL,
+    `created_at` DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (`id`),
     UNIQUE KEY `uq_students_user_nip` (`user_id`, `nip`),
-    KEY `idx_students_user_id`  (`user_id`),
-    KEY `idx_students_nip`      (`nip`),
-    KEY `idx_students_dept`     (`department_id`),
-    KEY `idx_students_course`   (`course_id`),
-    KEY `idx_students_class`    (`class_id`),
-    KEY `idx_students_semester` (`semester_id`),
-    CONSTRAINT `fk_students_user`   FOREIGN KEY (`user_id`)       REFERENCES `users`       (`id`) ON DELETE CASCADE,
-    CONSTRAINT `fk_students_dept`   FOREIGN KEY (`department_id`) REFERENCES `departments` (`id`) ON DELETE RESTRICT,
-    CONSTRAINT `fk_students_course` FOREIGN KEY (`course_id`)     REFERENCES `courses`     (`id`) ON DELETE RESTRICT,
-    CONSTRAINT `fk_students_class`  FOREIGN KEY (`class_id`)      REFERENCES `classes`     (`id`) ON DELETE RESTRICT
+    KEY `idx_students_user_id` (`user_id`),
+    KEY `idx_students_nip`     (`nip`),
+    KEY `idx_students_class`   (`class_id`),
+    CONSTRAINT `fk_students_user`  FOREIGN KEY (`user_id`)  REFERENCES `users`   (`id`) ON DELETE CASCADE,
+    CONSTRAINT `fk_students_class` FOREIGN KEY (`class_id`) REFERENCES `classes` (`id`) ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ------------------------------------------------------------

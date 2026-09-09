@@ -14,57 +14,29 @@ class GetAttendanceUseCase
         private readonly StudentRepositoryInterface    $studentRepository,
     ) {}
 
-    /**
-     * Returns a list of students for the given filters, each enriched with
-     * their attendance status for the requested date (null if not yet recorded).
-     */
-    public function execute(
-        int     $userId,
-        string  $date,
-        ?int    $departmentId = null,
-        ?int    $courseId     = null,
-        ?int    $classId      = null,
-        ?int    $semesterId   = null,
-    ): array {
-        // Get students matching filters (all, no pagination — for attendance form)
-        $students = $this->studentRepository->listForAttendance(
-            $userId, $departmentId, $courseId, $classId, $semesterId
-        );
+    public function execute(int $userId, string $date, ?int $classId = null): array
+    {
+        $students  = $this->studentRepository->listForAttendance($userId, $classId);
+        $records   = $this->attendanceRepository->listByDate($userId, $date, $classId);
 
-        // Build a map of studentId → attendance record
-        $records     = $this->attendanceRepository->listByDate(
-            $userId, $date, $departmentId, $courseId, $classId, $semesterId
-        );
         $recordMap = [];
-        foreach ($records as $record) {
-            $recordMap[$record->studentId] = $record;
-        }
+        foreach ($records as $r) { $recordMap[$r->studentId] = $r; }
 
-        $items        = [];
-        $absenCount   = 0;
-
-        foreach ($students as $student) {
-            $record = $recordMap[$student->id] ?? null;
-
-            $item = $student->toArray();
-            $item['attendance'] = $record ? [
-                'id'     => $record->id,
-                'status' => $record->status,
-            ] : null;
-
-            if ($record !== null) {
-                $absenCount++;
-            }
-
+        $items      = [];
+        $absenCount = 0;
+        foreach ($students as $s) {
+            $rec    = $recordMap[$s->id] ?? null;
+            $item   = $s->toArray();
+            $item['attendance'] = $rec ? ['id' => $rec->id, 'status' => $rec->status] : null;
+            if ($rec !== null) $absenCount++;
             $items[] = $item;
         }
 
         $total = count($students);
-
         return [
-            'date'           => $date,
-            'students'       => $items,
-            'summary'        => [
+            'date'     => $date,
+            'students' => $items,
+            'summary'  => [
                 'total'          => $total,
                 'sudah_diabsen'  => $absenCount,
                 'belum_diabsen'  => $total - $absenCount,

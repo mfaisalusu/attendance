@@ -36,16 +36,12 @@ class GetMasterDataUseCase
         return array_map(fn($i) => $i->toArray(), $this->masterRepository->getSemesters());
     }
 
-    /**
-     * Generate daftar tahun akademik dari 2026 hingga tahun berjalan.
-     */
     public function getYears(): array
     {
         $start   = 2026;
         $current = (int) date('Y');
         $end     = max($start, $current);
-
-        $years = [];
+        $years   = [];
         for ($y = $start; $y <= $end; $y++) {
             $years[] = ['id' => $y, 'name' => (string) $y];
         }
@@ -75,14 +71,14 @@ class GetMasterDataUseCase
     // Write — Courses
     // ------------------------------------------------------------------
 
-    public function createCourse(string $name, string $code, int $userId): array
+    public function createCourse(string $name, string $code, int $departmentId, int $userId): array
     {
-        return $this->masterRepository->createCourse($name, $code, $userId)->toArray();
+        return $this->masterRepository->createCourse($name, $code, $departmentId, $userId)->toArray();
     }
 
-    public function updateCourse(int $id, string $name, string $code, int $userId): array
+    public function updateCourse(int $id, string $name, string $code, int $departmentId, int $userId): array
     {
-        return $this->masterRepository->updateCourse($id, $name, $code, $userId)->toArray();
+        return $this->masterRepository->updateCourse($id, $name, $code, $departmentId, $userId)->toArray();
     }
 
     public function deleteCourse(int $id, int $userId): void
@@ -94,14 +90,16 @@ class GetMasterDataUseCase
     // Write — Classes
     // ------------------------------------------------------------------
 
-    public function createClass(string $name, string $code, int $semesterId, int $year, int $userId): array
+    /** @param int[] $courseIds */
+    public function createClass(string $name, string $code, int $departmentId, int $semesterId, int $year, array $courseIds, int $userId): array
     {
-        return $this->masterRepository->createClass($name, $code, $semesterId, $year, $userId)->toArray();
+        return $this->masterRepository->createClass($name, $code, $departmentId, $semesterId, $year, $courseIds, $userId)->toArray();
     }
 
-    public function updateClass(int $id, string $name, string $code, int $semesterId, int $year, int $userId): array
+    /** @param int[] $courseIds */
+    public function updateClass(int $id, string $name, string $code, int $departmentId, int $semesterId, int $year, array $courseIds, int $userId): array
     {
-        return $this->masterRepository->updateClass($id, $name, $code, $semesterId, $year, $userId)->toArray();
+        return $this->masterRepository->updateClass($id, $name, $code, $departmentId, $semesterId, $year, $courseIds, $userId)->toArray();
     }
 
     public function deleteClass(int $id, int $userId): void

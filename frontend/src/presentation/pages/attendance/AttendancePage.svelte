@@ -7,54 +7,40 @@
   import { masterService }  from '../../../application/services/masterService.js';
   import { today, formatDate } from '../../../core/utils/format.js';
 
-  let date          = today();
-  let departmentId  = '';
-  let courseId      = '';
-  let classId       = '';
-  let semesterId    = '';
+  let date    = today();
+  let classId = '';
 
-  let departments = [], courses = [], classes = [], semesters = [];
-  let attendanceData = null;   // { date, students, summary }
-  let loading = false;
-  let saving  = false;
-  let error   = '';
+  let classes        = [];
+  let attendanceData = null;
+  let loading        = false;
+  let saving         = false;
+  let error          = '';
+  let statusMap      = {};
+
   let toastMsg = '', toastType = 'success', toastVisible = false;
-
-  // Local map: student_id → current status choice
-  let statusMap = {};
-
-  function showToast(msg, type = 'success') {
-    toastMsg = msg; toastType = type; toastVisible = true;
-  }
+  function showToast(msg, type = 'success') { toastMsg = msg; toastType = type; toastVisible = true; }
 
   onMount(async () => {
-    [departments, courses, classes, semesters] = await Promise.all([
-      masterService.getDepartments(),
-      masterService.getCourses(),
-      masterService.getClasses(),
-      masterService.getSemesters(),
-    ]);
+    classes = await masterService.getClasses();
+    // Default ke id terkecil
+    if (classes.length > 0) {
+      classId = String(Math.min(...classes.map(c => c.id)));
+    }
+    await loadAttendance();
   });
 
   async function loadAttendance() {
-    if (!courseId || !classId) {
-      attendanceData = null;
-      return;
-    }
+    if (!classId) { attendanceData = null; return; }
     loading = true;
-    error = '';
+    error   = '';
 
     const res = await attendanceApi.list({
       date,
-      department_id: departmentId || undefined,
-      course_id:     courseId     || undefined,
-      class_id:      classId      || undefined,
-      semester_id:   semesterId   || undefined,
+      class_id: classId || undefined,
     });
 
     if (res?.ok) {
       attendanceData = res.data.data;
-      // Initialise statusMap from existing attendance records
       statusMap = {};
       for (const s of attendanceData.students) {
         statusMap[s.id] = s.attendance?.status ?? '';
@@ -72,19 +58,16 @@
     statusMap = next;
   }
 
-  $: absenCount  = Object.values(statusMap).filter(Boolean).length;
-  $: totalCount  = attendanceData?.students?.length ?? 0;
-  $: belumCount  = totalCount - absenCount;
+  $: absenCount = Object.values(statusMap).filter(Boolean).length;
+  $: totalCount = attendanceData?.students?.length ?? 0;
+  $: belumCount = totalCount - absenCount;
 
   async function saveAttendance() {
     const items = Object.entries(statusMap)
-      .filter(([, status]) => status !== '')
+      .filter(([, s]) => s !== '')
       .map(([student_id, status]) => ({ student_id: Number(student_id), status }));
 
-    if (items.length === 0) {
-      showToast('Belum ada absensi yang diisi.', 'error');
-      return;
-    }
+    if (items.length === 0) { showToast('Belum ada absensi yang diisi.', 'error'); return; }
 
     saving = true;
     const res = await attendanceApi.save({ date, attendance: items });
@@ -92,7 +75,7 @@
 
     if (res?.ok) {
       showToast('Absensi berhasil disimpan.');
-      loadAttendance(); // refresh counts
+      await loadAttendance();
     } else {
       showToast(res?.data?.message ?? 'Gagal menyimpan absensi.', 'error');
     }
@@ -106,52 +89,35 @@
     <h1>Absensi Harian</h1>
   </div>
 
-  <!-- Filters -->
+  <!-- Filter: tanggal + kelas saja -->
   <div class="filter-bar">
     <div class="form-group">
       <label for="a-date">Tanggal</label>
-      <input id="a-date" type="date" class="form-control" bind:value={date} on:change={loadAttendance} />
-    </div>
-    <div class="form-group">
-      <label for="a-dept">Jurusan</label>
-      <select id="a-dept" class="form-control" bind:value={departmentId} on:change={loadAttendance}>
-        <option value="">Semua</option>
-        {#each departments as d}<option value={d.id}>{d.name}</option>{/each}
-      </select>
-    </div>
-    <div class="form-group">
-      <label for="a-course">Mata Kuliah <span style="color:var(--danger)">*</span></label>
-      <select id="a-course" class="form-control" bind:value={courseId} on:change={loadAttendance}>
-        <option value="">Pilih Mata Kuliah</option>
-        {#each courses as c}<option value={c.id}>{c.name}</option>{/each}
-      </select>
+      <input id="a-date" type="date" class="form-control"
+        bind:value={date} on:change={loadAttendance} />
     </div>
     <div class="form-group">
       <label for="a-class">Kelas <span style="color:var(--danger)">*</span></label>
-      <select id="a-class" class="form-control" bind:value={classId} on:change={loadAttendance}>
-        <option value="">Pilih Kelas</option>
-        {#each classes as cl}<option value={cl.id}>{cl.name}</option>{/each}
-      </select>
-    </div>
-    <div class="form-group">
-      <label for="a-sem">Semester</label>
-      <select id="a-sem" class="form-control" bind:value={semesterId} on:change={loadAttendance}>
-        <option value="">Semua</option>
-        {#each semesters as s}<option value={s.id}>{s.name}</option>{/each}
+      <select id="a-class" class="form-control" bind:value={classId}
+        on:change={loadAttendance}>
+        <option value="" disabled>Pilih kelas</option>
+        {#each classes as cl}
+          <option value={String(cl.id)}>{cl.code} — {cl.name}</option>
+        {/each}
       </select>
     </div>
   </div>
 
-  {#if !courseId || !classId}
+  {#if !classId}
     <div class="alert alert-info" role="status">
-      Pilih <strong>Mata Kuliah</strong> dan <strong>Kelas</strong> untuk menampilkan daftar mahasiswa.
+      Pilih <strong>Kelas</strong> untuk menampilkan daftar mahasiswa.
     </div>
   {:else if loading}
     <Spinner />
   {:else if error}
     <div class="alert alert-error" role="alert">{error}</div>
   {:else if attendanceData}
-    <!-- Summary indicator -->
+    <!-- Summary -->
     <div class="attendance-summary" role="status">
       <span>📅 <strong>{formatDate(date)}</strong></span>
       <span>Total: <strong>{totalCount}</strong></span>
@@ -169,7 +135,7 @@
 
       {#if attendanceData.students.length === 0}
         <div class="empty-wrap">
-          <p>Tidak ada mahasiswa untuk filter yang dipilih.</p>
+          <p>Tidak ada mahasiswa di kelas ini.</p>
         </div>
       {:else}
         <div class="table-wrap">
@@ -190,15 +156,11 @@
                   <td style="font-weight:500">{s.name}</td>
                   <td>
                     <div class="radio-group" role="radiogroup" aria-label="Status kehadiran {s.name}">
-                      {#each ['hadir','izin','sakit','alpha'] as status}
+                      {#each ['hadir','izin','sakit','alpha'] as st}
                         <label>
-                          <input
-                            type="radio"
-                            name="attendance-{s.id}"
-                            value={status}
-                            bind:group={statusMap[s.id]}
-                          />
-                          {status.charAt(0).toUpperCase() + status.slice(1)}
+                          <input type="radio" name="att-{s.id}" value={st}
+                            bind:group={statusMap[s.id]} />
+                          {st.charAt(0).toUpperCase() + st.slice(1)}
                         </label>
                       {/each}
                     </div>
