@@ -23,13 +23,14 @@ class AttendanceController extends BaseController
     // GET /api/attendance
     public function index(Request $request): void
     {
-        $userId  = $this->authUserId();
-        $date    = $request->query('date') ?? date('Y-m-d');
-        $classId = $this->optInt($request, 'class_id');
+        $userId   = $this->authUserId();
+        $date     = $request->query('date') ?? date('Y-m-d');
+        $classId  = $this->optInt($request, 'class_id');
+        $courseId = $this->optInt($request, 'course_id');
 
         try {
             $result = (new GetAttendanceUseCase(new AttendanceRepository(), new StudentRepository()))
-                ->execute($userId, $date, $classId);
+                ->execute($userId, $date, $classId, $courseId);
             JsonResponse::success($result);
         } catch (Throwable) { JsonResponse::error('Gagal memuat data absensi.', 500); }
     }
@@ -40,12 +41,20 @@ class AttendanceController extends BaseController
         $userId = $this->authUserId();
         $data   = $request->all();
         $v      = new Validator();
-        if (!$v->validate($data, ['date' => 'required|date', 'attendance' => 'required|array'])) {
+        if (!$v->validate($data, [
+            'date'       => 'required|date',
+            'course_id'  => 'required|integer',
+            'attendance' => 'required|array',
+        ])) {
             JsonResponse::unprocessable($v->errors());
         }
         try {
             (new SaveAttendanceUseCase(new AttendanceRepository(), new StudentRepository()))
-                ->execute($userId, new AttendanceDTO(date: $data['date'], attendance: $data['attendance']));
+                ->execute($userId, new AttendanceDTO(
+                    date:       $data['date'],
+                    courseId:   (int) $data['course_id'],
+                    attendance: $data['attendance'],
+                ));
             JsonResponse::success(null, 'Absensi berhasil disimpan.');
         } catch (InvalidArgumentException $e) { JsonResponse::unprocessable(['attendance' => [$e->getMessage()]]); }
         catch (RuntimeException $e)           { JsonResponse::error($e->getMessage(), 500); }
@@ -85,11 +94,12 @@ class AttendanceController extends BaseController
         if ($month < 1 || $month > 12) {
             JsonResponse::unprocessable(['month' => ['Bulan harus antara 1 dan 12.']]);
         }
-        $classId = $this->optInt($request, 'class_id');
+        $classId  = $this->optInt($request, 'class_id');
+        $courseId = $this->optInt($request, 'course_id');
 
         try {
             $result = (new MonthlyRecapUseCase(new AttendanceRepository()))
-                ->execute($userId, $year, $month, $classId);
+                ->execute($userId, $year, $month, $classId, $courseId);
             JsonResponse::success($result);
         } catch (Throwable) { JsonResponse::error('Gagal memuat rekap absensi.', 500); }
     }

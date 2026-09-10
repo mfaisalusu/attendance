@@ -12,9 +12,9 @@ class MonthlyRecapUseCase
         private readonly AttendanceRepositoryInterface $attendanceRepository,
     ) {}
 
-    public function execute(int $userId, int $year, int $month, ?int $classId = null): array
+    public function execute(int $userId, int $year, int $month, ?int $classId = null, ?int $courseId = null): array
     {
-        $rows        = $this->attendanceRepository->monthlyMatrix($userId, $year, $month, $classId);
+        $rows        = $this->attendanceRepository->monthlyMatrix($userId, $year, $month, $classId, $courseId);
         $daysInMonth = (int) date('t', mktime(0, 0, 0, $month, 1, $year));
 
         return [

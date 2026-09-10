@@ -23,7 +23,7 @@ class SaveAttendanceUseCase
             throw new InvalidArgumentException('Data absensi tidak boleh kosong.');
         }
 
-        // Validate all statuses before persisting anything
+        // Validate all items before persisting
         foreach ($dto->attendance as $index => $item) {
             if (!isset($item['student_id']) || !isset($item['status'])) {
                 throw new InvalidArgumentException("Item absensi ke-{$index} tidak valid.");
@@ -35,7 +35,6 @@ class SaveAttendanceUseCase
                 );
             }
 
-            // Verify ownership — each student_id must belong to this user
             $student = $this->studentRepository->findById((int) $item['student_id'], $userId);
             if ($student === null) {
                 throw new InvalidArgumentException(
@@ -44,7 +43,6 @@ class SaveAttendanceUseCase
             }
         }
 
-        // Delegate bulk upsert (runs inside a DB transaction)
-        $this->attendanceRepository->bulkUpsert($userId, $dto->date, $dto->attendance);
+        $this->attendanceRepository->bulkUpsert($userId, $dto->date, $dto->courseId, $dto->attendance);
     }
 }

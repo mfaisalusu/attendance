@@ -11,21 +11,44 @@ use RuntimeException;
 class AttendanceRepository extends BaseRepository implements AttendanceRepositoryInterface
 {
     // ------------------------------------------------------------------
-    // List students + their attendance for a given date, scoped by class
+    // List attendance untuk tanggal tertentu, difilter by class + course
+    // course_id wajib diisi karena attendance dibedakan per mata kuliah
     // ------------------------------------------------------------------
 
-    public function listByDate(int $userId, string $date, ?int $classId = null): array
-    {
-        [$join, $params] = $this->buildStudentJoin($userId, $classId);
-        $sql = "SELECT a.* FROM attendance a {$join} WHERE a.attendance_date = :date";
-        $params[':date'] = $date;
-        $stmt = $this->db->prepare($sql);
+    public function listByDate(
+        int    $userId,
+        string $date,
+        ?int   $classId  = null,
+        ?int   $courseId = null
+    ): array {
+        $conditions = ['s.user_id = :uid', 'a.attendance_date = :date'];
+        $params     = [':uid' => $userId, ':date' => $date];
+
+        // JOIN ke students
+        $joins = ['INNER JOIN students s ON s.id = a.student_id'];
+
+        if ($classId !== null) {
+            $conditions[]       = 's.class_id = :class_id';
+            $params[':class_id'] = $classId;
+        }
+
+        if ($courseId !== null) {
+            $conditions[]        = 'a.course_id = :course_id';
+            $params[':course_id'] = $courseId;
+        }
+
+        $joinSql  = implode(' ', $joins);
+        $whereSql = implode(' AND ', $conditions);
+
+        $stmt = $this->db->prepare(
+            "SELECT a.* FROM attendance a {$joinSql} WHERE {$whereSql}"
+        );
         $stmt->execute($params);
         return array_map(fn($row) => Attendance::fromArray($row), $stmt->fetchAll());
     }
 
     // ------------------------------------------------------------------
-    // Find single record (ownership check via JOIN)
+    // Find single record
     // ------------------------------------------------------------------
 
     public function findById(int $id, int $userId): ?Attendance
@@ -41,21 +64,23 @@ class AttendanceRepository extends BaseRepository implements AttendanceRepositor
     }
 
     // ------------------------------------------------------------------
-    // Bulk upsert
+    // Bulk upsert — setiap item harus menyertakan course_id
+    // UNIQUE KEY: (student_id, course_id, attendance_date)
     // ------------------------------------------------------------------
 
-    public function bulkUpsert(int $userId, string $date, array $items): void
+    public function bulkUpsert(int $userId, string $date, int $courseId, array $items): void
     {
         $this->db->beginTransaction();
         try {
             $stmt = $this->db->prepare(
-                'INSERT INTO attendance (student_id, attendance_date, status)
-                 VALUES (:student_id, :date, :status)
+                'INSERT INTO attendance (student_id, course_id, attendance_date, status)
+                 VALUES (:student_id, :course_id, :date, :status)
                  ON DUPLICATE KEY UPDATE status = VALUES(status), updated_at = NOW()'
             );
             foreach ($items as $item) {
                 $stmt->execute([
                     ':student_id' => (int) $item['student_id'],
+                    ':course_id'  => $courseId,
                     ':date'       => $date,
                     ':status'     => $item['status'],
                 ]);
@@ -84,60 +109,82 @@ class AttendanceRepository extends BaseRepository implements AttendanceRepositor
     }
 
     // ------------------------------------------------------------------
-    // Monthly recap — matrix harian (satu baris per mahasiswa, kolom = tanggal)
-    // Kembalikan: array keyed by student_id => ['nip', 'name', 'days' => [1=>'H', 2=>null, ...]]
+    // Monthly recap — matrix harian per (student × hari)
+    // Filter by class + course; attendance dibedakan per course_id
     // ------------------------------------------------------------------
 
-    public function monthlyMatrix(int $userId, int $year, int $month, ?int $classId = null): array
-    {
-        $conditions = ['s.user_id = :uid'];
-        $params     = [':uid' => $userId, ':year' => $year, ':month' => $month];
+    public function monthlyMatrix(
+        int  $userId,
+        int  $year,
+        int  $month,
+        ?int $classId  = null,
+        ?int $courseId = null
+    ): array {
+        $studentConds  = ['s.user_id = :uid'];
+        $studentParams = [':uid' => $userId];
 
         if ($classId !== null) {
-            $conditions[] = 's.class_id = :class_id';
-            $params[':class_id'] = $classId;
+            $studentConds[]             = 's.class_id = :class_id';
+            $studentParams[':class_id'] = $classId;
         }
 
-        $where = implode(' AND ', $conditions);
+        // Filter mahasiswa berdasarkan course via class_courses pivot
+        $courseJoin = '';
+        if ($courseId !== null) {
+            $courseJoin                    = 'INNER JOIN class_courses cc ON cc.class_id = s.class_id AND cc.course_id = :course_id';
+            $studentParams[':course_id']   = $courseId;
+        }
 
-        // 1. Fetch all students in scope (ordered by name)
+        $studentWhere = implode(' AND ', $studentConds);
+
+        // 1. Fetch students in scope
         $sStmt = $this->db->prepare(
-            "SELECT s.id, s.nip, s.name FROM students s WHERE {$where} ORDER BY s.name ASC"
+            "SELECT s.id, s.nip, s.name
+             FROM students s {$courseJoin}
+             WHERE {$studentWhere}
+             ORDER BY s.name ASC"
         );
-        $sStmt->execute($params);
+        $sStmt->execute($studentParams);
         $students = $sStmt->fetchAll();
 
         if (empty($students)) return [];
 
-        // 2. Fetch all attendance records for this month
+        // 2. Fetch attendance records untuk bulan ini
+        // Filter course_id langsung dari kolom attendance.course_id — tidak perlu JOIN pivot
+        $attendParams = [':uid' => $userId, ':year' => $year, ':month' => $month];
+        $attendConds  = ['s.user_id = :uid', 'YEAR(a.attendance_date) = :year', 'MONTH(a.attendance_date) = :month'];
+
+        if ($classId !== null) {
+            $attendConds[]               = 's.class_id = :class_id';
+            $attendParams[':class_id']   = $classId;
+        }
+        if ($courseId !== null) {
+            $attendConds[]               = 'a.course_id = :course_id';
+            $attendParams[':course_id']  = $courseId;
+        }
+
+        $attendWhere = implode(' AND ', $attendConds);
+
         $aStmt = $this->db->prepare(
             "SELECT a.student_id, DAY(a.attendance_date) AS day, a.status
              FROM attendance a
              INNER JOIN students s ON s.id = a.student_id
-             WHERE {$where}
-               AND YEAR(a.attendance_date)  = :year
-               AND MONTH(a.attendance_date) = :month"
+             WHERE {$attendWhere}"
         );
-        $aStmt->execute($params);
+        $aStmt->execute($attendParams);
         $records = $aStmt->fetchAll();
 
-        // 3. Build lookup: [student_id][day] => status abbreviation
-        $statusMap = [
-            'hadir' => 'H',
-            'izin'  => 'I',
-            'sakit' => 'S',
-            'alpha' => 'A',
-        ];
+        // 3. Build lookup [student_id][day] => abbreviation
+        $abbr   = ['hadir' => 'H', 'izin' => 'I', 'sakit' => 'S', 'alpha' => 'A'];
         $lookup = [];
         foreach ($records as $r) {
-            $lookup[(int) $r['student_id']][(int) $r['day']] = $statusMap[$r['status']] ?? $r['status'];
+            $lookup[(int) $r['student_id']][(int) $r['day']] = $abbr[$r['status']] ?? $r['status'];
         }
 
-        // 4. Number of days in the month
+        // 4. Build matrix rows
         $daysInMonth = (int) date('t', mktime(0, 0, 0, $month, 1, $year));
+        $rows        = [];
 
-        // 5. Build matrix rows
-        $rows = [];
         foreach ($students as $s) {
             $sid  = (int) $s['id'];
             $days = [];
@@ -179,22 +226,5 @@ class AttendanceRepository extends BaseRepository implements AttendanceRepositor
             'sakit'       => (int) $row['sakit'],
             'alpha'       => (int) $row['alpha'],
         ];
-    }
-
-    // ------------------------------------------------------------------
-    // Helpers
-    // ------------------------------------------------------------------
-
-    private function buildStudentJoin(int $userId, ?int $classId): array
-    {
-        $conditions = ['s.id = a.student_id', 's.user_id = :uid'];
-        $params     = [':uid' => $userId];
-
-        if ($classId !== null) {
-            $conditions[] = 's.class_id = :class_id';
-            $params[':class_id'] = $classId;
-        }
-
-        return ['INNER JOIN students s ON ' . implode(' AND ', $conditions), $params];
     }
 }

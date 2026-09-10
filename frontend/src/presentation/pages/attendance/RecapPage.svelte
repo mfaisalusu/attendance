@@ -1,5 +1,6 @@
 <script>
   import { onMount } from 'svelte';
+  import { tick } from 'svelte';
   import AppLayout from '../../layouts/AppLayout.svelte';
   import Spinner   from '../../components/common/Spinner.svelte';
   import { attendanceApi } from '../../../infrastructure/api/attendanceApi.js';
@@ -9,12 +10,14 @@
   const currentYear  = new Date().getFullYear();
   const currentMonth = new Date().getMonth() + 1;
 
-  let year    = currentYear;
-  let month   = currentMonth;
-  let classId = '';
+  let year     = currentYear;
+  let month    = currentMonth;
+  let classId  = '';
+  let courseId = '';
 
-  let classes = [];
-  let years   = [];
+  let classes    = [];
+  let allCourses = [];
+  let years      = [];
 
   let recapData   = null;
   let loading     = false;
@@ -24,8 +27,9 @@
   const months = Array.from({ length: 12 }, (_, i) => ({ value: i + 1, label: monthName(i + 1) }));
 
   onMount(async () => {
-    [classes, years] = await Promise.all([
+    [classes, allCourses, years] = await Promise.all([
       masterService.getClasses(),
+      masterService.getCourses(),
       masterService.getYears(),
     ]);
     // Set default tahun ke nilai terdekat yang tersedia
@@ -38,6 +42,29 @@
     }
   });
 
+  // Mata kuliah sesuai kelas yang dipilih
+  $: selectedClassObj = classes.find(c => String(c.id) === String(classId));
+  $: coursesForClass  = selectedClassObj?.course_ids?.length
+    ? allCourses.filter(c => selectedClassObj.course_ids.includes(c.id))
+    : [];
+
+  // Default courseId ke id terkecil setiap kali coursesForClass berubah
+  $: if (coursesForClass.length > 0) {
+    const minCourseId = String(Math.min(...coursesForClass.map(c => c.id)));
+    if (!courseId || !coursesForClass.find(c => String(c.id) === courseId)) {
+      courseId = minCourseId;
+    }
+  }
+
+  // Reset saat kelas berubah
+  async function onClassChange() {
+    courseId    = '';
+    recapData   = null;
+    hasSearched = false;
+    await tick();
+    // courseId sudah di-set oleh reactive block, tidak perlu load — user klik tombol sendiri
+  }
+
   async function loadRecap() {
     if (!classId) { error = 'Pilih kelas terlebih dahulu.'; return; }
     loading     = true;
@@ -47,7 +74,8 @@
     const res = await attendanceApi.recap({
       year,
       month,
-      class_id: classId || undefined,
+      class_id:  classId  || undefined,
+      course_id: courseId || undefined,
     });
 
     if (res?.ok) {
@@ -58,12 +86,10 @@
     loading = false;
   }
 
-  // Array of day numbers: [1, 2, ..., daysInMonth]
   $: dayNumbers = recapData
     ? Array.from({ length: recapData.days_in_month }, (_, i) => i + 1)
     : [];
 
-  // Status color helper
   function statusColor(val) {
     if (val === 'H') return 'var(--success)';
     if (val === 'I') return '#f59e0b';
@@ -71,9 +97,6 @@
     if (val === 'A') return 'var(--danger)';
     return 'var(--gray-300)';
   }
-
-  // Selected class label
-  $: selectedClass = classes.find(c => String(c.id) === String(classId));
 </script>
 
 <svelte:head><title>Rekap Absensi — Absensi</title></svelte:head>
@@ -83,29 +106,45 @@
     <h1>Rekap Absensi Bulanan</h1>
   </div>
 
-  <!-- Filter bar: kelas + bulan + tahun -->
+  <!-- Filter bar -->
   <div class="filter-bar">
     <div class="form-group">
       <label for="r-class">Kelas <span style="color:var(--danger)">*</span></label>
-      <select id="r-class" class="form-control" bind:value={classId}>
+      <select id="r-class" class="form-control" bind:value={classId} on:change={onClassChange}>
         <option value="" disabled>Pilih kelas</option>
         {#each classes as cl}
-          <option value={String(cl.id)}>{cl.code} — {cl.name}</option>
+          <option value={String(cl.id)}>{cl.code}</option>
         {/each}
       </select>
     </div>
+
+    <div class="form-group">
+      <label for="r-course">Mata Kuliah</label>
+      <select id="r-course" class="form-control" bind:value={courseId}
+        disabled={!classId || coursesForClass.length === 0}>
+        {#each coursesForClass as c}
+          <option value={String(c.id)}>{c.code} — {c.name}</option>
+        {/each}
+      </select>
+      {#if classId && coursesForClass.length === 0}
+        <small class="hint">Tidak ada mata kuliah untuk kelas ini.</small>
+      {/if}
+    </div>
+
     <div class="form-group">
       <label for="r-month">Bulan</label>
       <select id="r-month" class="form-control" bind:value={month}>
         {#each months as m}<option value={m.value}>{m.label}</option>{/each}
       </select>
     </div>
+
     <div class="form-group">
       <label for="r-year">Tahun</label>
       <select id="r-year" class="form-control" bind:value={year}>
         {#each years as y}<option value={y.id}>{y.name}</option>{/each}
       </select>
     </div>
+
     <div class="form-group" style="justify-content:flex-end">
       <!-- svelte-ignore a11y-label-has-associated-control -->
       <label aria-hidden="true">&nbsp;</label>
@@ -124,9 +163,12 @@
       <div class="recap-header">
         <div>
           <h2>{monthName(recapData.month)} {recapData.year}</h2>
-          {#if selectedClass}
-            <p class="recap-sub">{selectedClass.code} — {selectedClass.name}</p>
-          {/if}
+          <p class="recap-sub">
+            {selectedClassObj?.code ?? ''}
+            {#if courseId}
+              — {coursesForClass.find(c => String(c.id) === String(courseId))?.name ?? ''}
+            {/if}
+          </p>
         </div>
         <div class="legend">
           <span class="leg-item" style="color:var(--success)">■ H = Hadir</span>
@@ -142,7 +184,6 @@
           <p>Tidak ada data mahasiswa untuk kelas dan periode ini.</p>
         </div>
       {:else}
-        <!-- Horizontal scroll wrapper untuk tabel lebar -->
         <div class="matrix-wrap">
           <table class="matrix-table">
             <thead>
@@ -183,68 +224,37 @@
 </AppLayout>
 
 <style>
+  .hint { color: var(--gray-400); font-size: .75rem; margin-top: 3px; display: block; }
+
   .recap-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    flex-wrap: wrap;
-    gap: 12px;
-    margin-bottom: 20px;
+    display: flex; justify-content: space-between; align-items: flex-start;
+    flex-wrap: wrap; gap: 12px; margin-bottom: 20px;
   }
-  .recap-header h2 {
-    font-size: 1rem;
-    font-weight: 700;
-    margin: 0 0 2px;
-  }
+  .recap-header h2 { font-size: 1rem; font-weight: 700; margin: 0 0 2px; }
   .recap-sub { color: var(--gray-500); font-size: .875rem; margin: 0; }
 
-  .legend {
-    display: flex;
-    gap: 14px;
-    flex-wrap: wrap;
-    align-items: center;
-    font-size: .78rem;
-  }
+  .legend { display: flex; gap: 14px; flex-wrap: wrap; align-items: center; font-size: .78rem; }
   .leg-item { white-space: nowrap; }
 
-  /* Matrix table */
-  .matrix-wrap {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-  }
+  .matrix-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 
   .matrix-table {
-    border-collapse: collapse;
-    min-width: 100%;
-    font-size: .82rem;
-    white-space: nowrap;
+    border-collapse: collapse; min-width: 100%; font-size: .82rem; white-space: nowrap;
   }
-  .matrix-table th,
-  .matrix-table td {
-    border: 1px solid var(--gray-200);
-    padding: 5px 6px;
-    vertical-align: middle;
+  .matrix-table th, .matrix-table td {
+    border: 1px solid var(--gray-200); padding: 5px 6px; vertical-align: middle;
   }
   .matrix-table thead th {
-    background: var(--gray-50);
-    font-weight: 600;
-    text-align: center;
-    position: sticky;
-    top: 0;
-    z-index: 1;
+    background: var(--gray-50); font-weight: 600; text-align: center;
+    position: sticky; top: 0; z-index: 1;
   }
 
-  /* Sticky columns */
   .col-no   { width: 36px; text-align: center; }
   .col-nip  { width: 90px; }
   .col-name { min-width: 140px; max-width: 200px; }
   .col-day  { width: 30px; text-align: center; font-family: monospace; }
 
-  .col-no, .col-nip, .col-name {
-    position: sticky;
-    background: #fff;
-    z-index: 2;
-  }
+  .col-no, .col-nip, .col-name { position: sticky; background: #fff; z-index: 2; }
   .col-no   { left: 0; }
   .col-nip  { left: 36px; }
   .col-name { left: 126px; box-shadow: 2px 0 4px rgba(0,0,0,.04); }
@@ -253,9 +263,8 @@
   .matrix-table thead .col-nip,
   .matrix-table thead .col-name { background: var(--gray-50); z-index: 3; }
 
-  .muted     { color: var(--gray-400); }
-  .nip-code  { font-size: .78rem; }
+  .muted { color: var(--gray-400); }
+  .nip-code { font-size: .78rem; }
   .name-cell { font-weight: 500; overflow: hidden; text-overflow: ellipsis; }
-
   .day-cell { font-size: .8rem; }
 </style>

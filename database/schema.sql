@@ -141,17 +141,22 @@ CREATE TABLE IF NOT EXISTS `students` (
 
 -- ------------------------------------------------------------
 -- Table: attendance
+-- Unik per (student, tanggal, mata kuliah) — satu mahasiswa bisa
+-- punya status berbeda untuk mata kuliah berbeda di hari yang sama.
 -- ------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS `attendance` (
     `id`              INT UNSIGNED    NOT NULL AUTO_INCREMENT,
     `student_id`      INT UNSIGNED    NOT NULL,
+    `course_id`       INT UNSIGNED    NOT NULL,
     `attendance_date` DATE            NOT NULL,
     `status`          ENUM('hadir','izin','sakit','alpha') NOT NULL,
     `created_at`      DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `updated_at`      DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (`id`),
-    UNIQUE KEY `uq_attendance_student_date` (`student_id`, `attendance_date`),
+    UNIQUE KEY `uq_attendance_student_course_date` (`student_id`, `course_id`, `attendance_date`),
     KEY `idx_attendance_student_id` (`student_id`),
+    KEY `idx_attendance_course_id`  (`course_id`),
     KEY `idx_attendance_date`       (`attendance_date`),
-    CONSTRAINT `fk_attendance_student` FOREIGN KEY (`student_id`) REFERENCES `students` (`id`) ON DELETE CASCADE
+    CONSTRAINT `fk_attendance_student` FOREIGN KEY (`student_id`) REFERENCES `students` (`id`) ON DELETE CASCADE,
+    CONSTRAINT `fk_attendance_course`  FOREIGN KEY (`course_id`)  REFERENCES `courses`  (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

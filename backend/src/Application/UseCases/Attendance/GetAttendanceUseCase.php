@@ -14,10 +14,10 @@ class GetAttendanceUseCase
         private readonly StudentRepositoryInterface    $studentRepository,
     ) {}
 
-    public function execute(int $userId, string $date, ?int $classId = null): array
+    public function execute(int $userId, string $date, ?int $classId = null, ?int $courseId = null): array
     {
         $students  = $this->studentRepository->listForAttendance($userId, $classId);
-        $records   = $this->attendanceRepository->listByDate($userId, $date, $classId);
+        $records   = $this->attendanceRepository->listByDate($userId, $date, $classId, $courseId);
 
         $recordMap = [];
         foreach ($records as $r) { $recordMap[$r->studentId] = $r; }

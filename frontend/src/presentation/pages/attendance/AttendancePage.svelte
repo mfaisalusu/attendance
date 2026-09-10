@@ -1,5 +1,6 @@
 <script>
   import { onMount } from 'svelte';
+  import { tick } from 'svelte';
   import AppLayout from '../../layouts/AppLayout.svelte';
   import Spinner   from '../../components/common/Spinner.svelte';
   import Toast     from '../../components/common/Toast.svelte';
@@ -7,10 +8,12 @@
   import { masterService }  from '../../../application/services/masterService.js';
   import { today, formatDate } from '../../../core/utils/format.js';
 
-  let date    = today();
-  let classId = '';
+  let date     = today();
+  let classId  = '';
+  let courseId = '';
 
   let classes        = [];
+  let allCourses     = [];   // semua courses milik user
   let attendanceData = null;
   let loading        = false;
   let saving         = false;
@@ -21,13 +24,37 @@
   function showToast(msg, type = 'success') { toastMsg = msg; toastType = type; toastVisible = true; }
 
   onMount(async () => {
-    classes = await masterService.getClasses();
+    [classes, allCourses] = await Promise.all([
+      masterService.getClasses(),
+      masterService.getCourses(),
+    ]);
     // Default ke id terkecil
     if (classes.length > 0) {
       classId = String(Math.min(...classes.map(c => c.id)));
     }
     await loadAttendance();
   });
+
+  // Mata kuliah yang tersedia sesuai kelas yang dipilih
+  $: selectedClassObj  = classes.find(c => String(c.id) === String(classId));
+  $: coursesForClass   = selectedClassObj?.course_ids?.length
+    ? allCourses.filter(c => selectedClassObj.course_ids.includes(c.id))
+    : [];
+
+  // Saat coursesForClass berubah (ganti kelas), default courseId ke id terkecil
+  $: if (coursesForClass.length > 0) {
+    const minCourseId = String(Math.min(...coursesForClass.map(c => c.id)));
+    if (!courseId || !coursesForClass.find(c => String(c.id) === courseId)) {
+      courseId = minCourseId;
+    }
+  }
+
+  // Saat kelas berubah: reset courseId, tunggu reactive settle, lalu load
+  async function onClassChange() {
+    courseId = '';
+    await tick();
+    loadAttendance();
+  }
 
   async function loadAttendance() {
     if (!classId) { attendanceData = null; return; }
@@ -36,7 +63,8 @@
 
     const res = await attendanceApi.list({
       date,
-      class_id: classId || undefined,
+      class_id:  classId  || undefined,
+      course_id: courseId || undefined,
     });
 
     if (res?.ok) {
@@ -68,9 +96,14 @@
       .map(([student_id, status]) => ({ student_id: Number(student_id), status }));
 
     if (items.length === 0) { showToast('Belum ada absensi yang diisi.', 'error'); return; }
+    if (!courseId)          { showToast('Pilih mata kuliah terlebih dahulu.', 'error'); return; }
 
     saving = true;
-    const res = await attendanceApi.save({ date, attendance: items });
+    const res = await attendanceApi.save({
+      date,
+      course_id:  Number(courseId),
+      attendance: items,
+    });
     saving = false;
 
     if (res?.ok) {
@@ -89,22 +122,35 @@
     <h1>Absensi Harian</h1>
   </div>
 
-  <!-- Filter: tanggal + kelas saja -->
+  <!-- Filter bar -->
   <div class="filter-bar">
     <div class="form-group">
       <label for="a-date">Tanggal</label>
       <input id="a-date" type="date" class="form-control"
         bind:value={date} on:change={loadAttendance} />
     </div>
+
     <div class="form-group">
       <label for="a-class">Kelas <span style="color:var(--danger)">*</span></label>
-      <select id="a-class" class="form-control" bind:value={classId}
-        on:change={loadAttendance}>
+      <select id="a-class" class="form-control" bind:value={classId} on:change={onClassChange}>
         <option value="" disabled>Pilih kelas</option>
         {#each classes as cl}
-          <option value={String(cl.id)}>{cl.code} — {cl.name}</option>
+          <option value={String(cl.id)}>{cl.code}</option>
         {/each}
       </select>
+    </div>
+
+    <div class="form-group">
+      <label for="a-course">Mata Kuliah</label>
+      <select id="a-course" class="form-control" bind:value={courseId}
+        on:change={loadAttendance} disabled={!classId || coursesForClass.length === 0}>
+        {#each coursesForClass as c}
+          <option value={String(c.id)}>{c.code} — {c.name}</option>
+        {/each}
+      </select>
+      {#if classId && coursesForClass.length === 0}
+        <small class="hint">Tidak ada mata kuliah untuk kelas ini.</small>
+      {/if}
     </div>
   </div>
 
@@ -117,9 +163,12 @@
   {:else if error}
     <div class="alert alert-error" role="alert">{error}</div>
   {:else if attendanceData}
-    <!-- Summary -->
+    <!-- Summary bar -->
     <div class="attendance-summary" role="status">
       <span>📅 <strong>{formatDate(date)}</strong></span>
+      {#if selectedClassObj}
+        <span>🏫 <strong>{selectedClassObj.code}</strong></span>
+      {/if}
       <span>Total: <strong>{totalCount}</strong></span>
       <span style="color:#15803d">✅ Diabsen: <strong>{absenCount}</strong></span>
       {#if belumCount > 0}
@@ -182,3 +231,7 @@
 </AppLayout>
 
 <Toast bind:visible={toastVisible} message={toastMsg} type={toastType} />
+
+<style>
+  .hint { color: var(--gray-400); font-size: .75rem; margin-top: 3px; display: block; }
+</style>

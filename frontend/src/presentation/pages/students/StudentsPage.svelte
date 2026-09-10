@@ -105,7 +105,7 @@
     <div class="form-group">
       <label for="s-search">Cari</label>
       <input id="s-search" type="search" class="form-control" bind:value={search}
-        on:input={onSearchInput} placeholder="NIP atau nama..." />
+        on:input={onSearchInput} on:search={onSearchInput} placeholder="NIP atau nama..." />
     </div>
     <div class="form-group">
       <label for="s-class">Kelas <span style="color:var(--danger)">*</span></label>
@@ -113,7 +113,7 @@
         on:change={() => loadStudents(1)}>
         <option value="">Semua Kelas</option>
         {#each classes as cl}
-          <option value={String(cl.id)}>{cl.code} — {cl.name}</option>
+          <option value={String(cl.id)}>{cl.code}</option>
         {/each}
       </select>
     </div>
