@@ -1,3 +1,7 @@
 node_modules/
 dist/
+
+# Environment files — semua .env.* ter-ignore kecuali .env.example
 .env
+.env.*
+!.env.example
