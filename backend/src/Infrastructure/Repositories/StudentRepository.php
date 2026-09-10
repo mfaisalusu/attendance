@@ -117,8 +117,9 @@ class StudentRepository extends BaseRepository implements StudentRepositoryInter
         $params     = [':uid' => $userId];
 
         if ($search !== null && $search !== '') {
-            $conditions[] = '(nip LIKE :search OR name LIKE :search)';
-            $params[':search'] = '%' . $search . '%';
+            $conditions[] = '(nip LIKE :search_nip OR name LIKE :search_name)';
+            $params[':search_nip']  = '%' . $search . '%';
+            $params[':search_name'] = '%' . $search . '%';
         }
         if ($classId !== null) {
             $conditions[] = 'class_id = :class_id';
