@@ -434,7 +434,73 @@ tbody tr:hover { background: rgba(110,231,183,.03); }
 /* ════════════════════════════════════════
    RESPONSIVE
 ════════════════════════════════════════ */
+
+/* ── Tablet + Mobile (≤ 768px) ── */
 @media (max-width: 768px) {
   :root { --sidebar-w: 0px; }
+
+  /* Page header: stack vertically */
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 18px;
+  }
+  .page-header > *:last-child { width: 100%; }
+  .page-header .btn { width: 100%; justify-content: center; }
+
+  /* Filter bar: full-width each group */
+  .filter-bar { padding: 14px; gap: 10px; }
   .filter-bar .form-group { min-width: 100%; }
+
+  /* Card: reduce padding */
+  .card { padding: 16px; }
+
+  /* Table: horizontal scroll */
+  .table-wrap { border-radius: 0; margin: 0 -16px; }
+  table { font-size: .8rem; }
+  thead th { padding: 9px 10px; }
+  tbody td  { padding: 9px 10px; }
+
+  /* Modal: full-width on mobile */
+  .modal-backdrop { padding: 0; align-items: flex-end; }
+  .modal {
+    max-width: 100%;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    max-height: 92vh;
+  }
+  .modal-body   { padding: 18px; }
+  .modal-header { padding: 16px 18px; }
+  .modal-footer { padding: 14px 18px; }
+
+  /* Stat cards: 2 columns */
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+  .stat-card { padding: 14px 16px; }
+  .stat-card .stat-value { font-size: 1.5rem; }
+
+  /* Pagination */
+  .pagination { justify-content: center; flex-wrap: wrap; }
+
+  /* Attendance summary */
+  .attendance-summary { gap: 10px; padding: 10px 12px; }
+}
+
+/* ── Mobile only (≤ 480px) ── */
+@media (max-width: 480px) {
+  html { font-size: 14px; }
+
+  .card { padding: 14px; border-radius: var(--radius); }
+
+  /* Stat cards: still 2 columns but smaller */
+  .stat-card .stat-value { font-size: 1.3rem; }
+  .stat-card .stat-label { font-size: .68rem; }
+
+  /* Modal: full screen */
+  .modal { max-height: 96vh; }
+
+  /* Filter bar: extra compact */
+  .filter-bar { padding: 12px; }
 }

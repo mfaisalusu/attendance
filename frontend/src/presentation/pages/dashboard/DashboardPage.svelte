@@ -481,9 +481,33 @@
   }
 
   /* ── Responsive ── */
-  @media (max-width: 640px) {
-    .stats-grid { grid-template-columns: repeat(2, 1fr); }
+
+  /* Tablet (≤ 768px) */
+  @media (max-width: 768px) {
+    .dash-header { flex-direction: column; align-items: flex-start; gap: 12px; }
     .dash-header-right { width: 100%; }
     .quick-action-btn  { width: 100%; justify-content: center; }
+    .stats-grid { grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .stat-value { font-size: 1.6rem; }
+    .rate-card  { padding: 16px 18px; }
+    .shortcuts-grid { gap: 8px; }
+  }
+
+  /* Mobile (≤ 540px) */
+  @media (max-width: 540px) {
+    .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    .stat-value { font-size: 1.4rem; }
+    .stat-trend { display: none; }     /* hide trend badge to save space */
+    .rate-header { flex-direction: column; align-items: flex-start; gap: 4px; }
+    .rate-pct { font-size: 1.1rem; }
+    .rate-legend { gap: 10px; }
+    .shortcut-card { flex: 1; min-width: calc(50% - 4px); justify-content: center; }
+  }
+
+  /* Very small (≤ 360px) */
+  @media (max-width: 360px) {
+    .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+    .stat-card  { padding: 12px 14px; }
+    .stat-value { font-size: 1.3rem; }
   }
 </style>

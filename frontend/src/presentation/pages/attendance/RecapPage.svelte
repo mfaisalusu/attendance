@@ -531,4 +531,52 @@
     display: flex; align-items: center; justify-content: center;
     text-transform: uppercase;
   }
+
+  /* ── Responsive ── */
+
+  /* Tablet (≤ 768px) */
+  @media (max-width: 768px) {
+    .filter-card { padding: 16px; }
+    .filter-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .filter-footer { padding-top: 12px; }
+    .search-btn { width: 100%; justify-content: center; }
+    .recap-strip { flex-direction: column; align-items: flex-start; gap: 8px; }
+    .legend { gap: 8px; }
+    .header-left h1 { font-size: 1.15rem; }
+  }
+
+  /* Mobile (≤ 520px) */
+  @media (max-width: 520px) {
+    /* Filter stacks to 1 column */
+    .filter-grid { grid-template-columns: 1fr; }
+
+    /* Matrix table: make cells smaller */
+    .matrix-table { font-size: .72rem; }
+    .matrix-table th { padding: 7px 5px; font-size: .62rem; }
+    .matrix-table td { padding: 6px 5px; }
+
+    /* Status cell compact */
+    .status-cell { width: 16px; height: 16px; font-size: .62rem; border-radius: 3px; }
+
+    /* Summary cols: compact */
+    .col-summary { width: 22px; font-size: .7rem; }
+
+    /* Scroll hint */
+    .matrix-card::after {
+      content: '← Geser untuk melihat selengkapnya →';
+      display: block;
+      text-align: center;
+      font-size: .68rem;
+      color: rgba(110,231,183,.3);
+      padding: 8px 0;
+      border-top: 1px solid rgba(255,255,255,.04);
+    }
+
+    /* Legend: compact */
+    .legend { gap: 6px; }
+    .legend-item { font-size: .7rem; }
+
+    /* Recap period text smaller */
+    .recap-period { font-size: .78rem; }
+  }
 </style>

@@ -3,10 +3,14 @@
   import Topbar  from '../components/layout/Topbar.svelte';
 
   export let currentPath = '/dashboard';
+
+  let sidebarOpen = false;
+  function toggleSidebar() { sidebarOpen = !sidebarOpen; }
+  function closeSidebar()  { sidebarOpen = false; }
 </script>
 
-<Sidebar {currentPath} />
-<Topbar />
+<Sidebar {currentPath} {sidebarOpen} {closeSidebar} />
+<Topbar {toggleSidebar} />
 
 <main class="main-content">
   <slot />

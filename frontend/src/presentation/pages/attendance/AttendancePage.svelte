@@ -589,4 +589,40 @@
     border-top-color: #0a2218; border-radius: 50%;
     animation: spin .6s linear infinite; flex-shrink: 0;
   }
+
+  /* ── Responsive ── */
+
+  /* Tablet (≤ 768px) */
+  @media (max-width: 768px) {
+    .summary-strip { padding: 10px 14px; gap: 8px; }
+    .summary-counts { gap: 8px; }
+    .card-toolbar { flex-direction: column; align-items: flex-start; gap: 8px; }
+    .all-hadir-btn { width: 100%; justify-content: center; }
+    .save-btn { width: 100%; justify-content: center; }
+    .header-left h1 { font-size: 1.15rem; }
+  }
+
+  /* Mobile (≤ 600px) — pivot table ke card-list per mahasiswa */
+  @media (max-width: 600px) {
+    /* Hide table header kolom # dan NIP */
+    thead th:nth-child(1),
+    thead th:nth-child(2) { display: none; }
+    .td-num, td:nth-child(2):has(.nip-badge) { display: none; }
+
+    /* Status pills: 2x2 grid agar tidak terlalu lebar */
+    .td-status { min-width: 0; }
+    .status-pills { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
+    .status-pill { padding: 6px 8px; font-size: .75rem; justify-content: center; }
+
+    /* Progress bar compact */
+    .progress-wrap { margin-bottom: 10px; }
+  }
+
+  /* Very small (≤ 420px) */
+  @media (max-width: 420px) {
+    .summary-counts { display: none; } /* summary terlalu ramai, cukup di progress bar */
+    .student-avatar { width: 26px; height: 26px; font-size: .65rem; }
+    .save-bar { flex-direction: column; align-items: stretch; }
+    .save-bar-info { text-align: center; }
+  }
 </style>

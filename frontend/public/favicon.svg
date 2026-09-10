@@ -1,0 +1,20 @@
+<svg width="32" height="32" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background rounded rect with green gradient -->
+  <rect width="40" height="40" rx="10" fill="url(#grad)"/>
+
+  <!-- Lines (checklist lines) -->
+  <path d="M11 13h18M11 20h12M11 27h14" stroke="#0a2218" stroke-width="2.8" stroke-linecap="round"/>
+
+  <!-- Circle badge bottom-right -->
+  <circle cx="30" cy="27" r="5" fill="#0a2218" opacity=".75"/>
+
+  <!-- Checkmark inside circle -->
+  <path d="M27.8 27l1.8 1.8L32 25" stroke="#a7f3d0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <defs>
+    <linearGradient id="grad" x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#6ee7b7"/>
+      <stop offset="1" stop-color="#34d399"/>
+    </linearGradient>
+  </defs>
+</svg>

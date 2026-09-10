@@ -710,4 +710,55 @@
     border-top-color: #0a2218; border-radius: 50%;
     animation: spin .6s linear infinite; flex-shrink: 0;
   }
+
+  /* ── Responsive ── */
+
+  /* Tablet (≤ 768px) */
+  @media (max-width: 768px) {
+    .header-left h1 { font-size: 1.15rem; }
+
+    /* Tabs: horizontal scroll instead of wrap */
+    .tabs-wrap {
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      padding-bottom: 0;
+      gap: 2px;
+      /* scrollbar hidden */
+      scrollbar-width: none;
+    }
+    .tabs-wrap::-webkit-scrollbar { display: none; }
+    .tab-btn {
+      padding: 8px 12px;
+      font-size: .78rem;
+      flex-shrink: 0;
+    }
+    /* Hide read-only badge text on small screens */
+    .ro-badge { display: none; }
+  }
+
+  /* Mobile (≤ 580px) */
+  @media (max-width: 580px) {
+    /* table: hide less critical columns */
+    /* Kelas tab has most columns — hide Mata Kuliah column content (keep header) */
+    .td-courses { max-width: 100px; font-size: .72rem; }
+
+    /* Action buttons: icon only */
+    .action-btn { padding: 5px 8px; margin-left: 3px; }
+
+    /* Tab count badge: hide to save space */
+    .tab-count { display: none; }
+  }
+
+  /* Mobile (≤ 460px) */
+  @media (max-width: 460px) {
+    /* form-row 2 kolom → 1 kolom */
+    .form-row { grid-template-columns: 1fr; }
+
+    /* Tab label: icon only or short label */
+    .tab-btn { padding: 8px 10px; font-size: .75rem; }
+
+    /* Chips compact */
+    .dept-chip, .sem-chip, .year-chip { font-size: .65rem; padding: 2px 6px; }
+  }
 </style>

@@ -1,5 +1,7 @@
 <script>
-  export let currentPath = '/';
+  export let currentPath  = '/';
+  export let sidebarOpen  = false;
+  export let closeSidebar = () => {};
 
   const navItems = [
     { path: '/dashboard',        label: 'Dashboard',     icon: 'dashboard', exact: true  },
@@ -13,9 +15,18 @@
     if (item.exact) return currentPath === item.path;
     return currentPath.startsWith(item.path);
   }
+
+  // Close sidebar when nav item clicked (mobile)
+  function handleNavClick() { closeSidebar(); }
 </script>
 
-<aside class="sidebar">
+<!-- Mobile overlay -->
+{#if sidebarOpen}
+  <!-- svelte-ignore a11y-click-events-have-key-events a11y-no-static-element-interactions -->
+  <div class="sidebar-overlay" on:click={closeSidebar} role="presentation" aria-hidden="true"></div>
+{/if}
+
+<aside class="sidebar" class:open={sidebarOpen} aria-label="Navigasi utama">
   <!-- Brand -->
   <div class="sidebar-brand">
     <div class="brand-logo">
@@ -36,6 +47,12 @@
       <span class="brand-name">Absensi</span>
       <span class="brand-sub">Sistem Kehadiran</span>
     </div>
+    <!-- Close button (mobile only) -->
+    <button class="sidebar-close-btn" on:click={closeSidebar} aria-label="Tutup menu">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+      </svg>
+    </button>
   </div>
 
   <!-- Nav label -->
@@ -49,6 +66,7 @@
         class="nav-item"
         class:active={isActive(item)}
         aria-current={isActive(item) ? 'page' : undefined}
+        on:click={handleNavClick}
       >
         <span class="nav-icon" aria-hidden="true">
           {#if item.icon === 'dashboard'}
@@ -88,13 +106,25 @@
     {/each}
   </nav>
 
-  <!-- Bottom decoration -->
+  <!-- Bottom -->
   <div class="sidebar-footer">
     <div class="sidebar-version">v1.0.0</div>
   </div>
 </aside>
 
 <style>
+  /* ── Overlay (mobile) ── */
+  .sidebar-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,.6);
+    backdrop-filter: blur(2px);
+    z-index: 99;
+    animation: fadeIn .2s ease;
+  }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+  /* ── Sidebar ── */
   .sidebar {
     position: fixed; top: 0; left: 0; bottom: 0;
     width: var(--sidebar-w);
@@ -102,9 +132,9 @@
     display: flex; flex-direction: column;
     z-index: 100; overflow-y: auto;
     border-right: 1px solid rgba(110,231,183,.08);
+    transition: transform .25s cubic-bezier(.4,0,.2,1);
   }
 
-  /* scrollbar */
   .sidebar::-webkit-scrollbar { width: 4px; }
   .sidebar::-webkit-scrollbar-track { background: transparent; }
   .sidebar::-webkit-scrollbar-thumb { background: rgba(110,231,183,.15); border-radius: 2px; }
@@ -114,14 +144,13 @@
     display: flex; align-items: center; gap: 11px;
     padding: 20px 18px 18px;
     border-bottom: 1px solid rgba(110,231,183,.08);
+    position: relative;
   }
   .brand-logo {
     flex-shrink: 0;
     filter: drop-shadow(0 2px 8px rgba(110,231,183,.3));
   }
-  .brand-text {
-    display: flex; flex-direction: column; gap: 1px;
-  }
+  .brand-text { display: flex; flex-direction: column; gap: 1px; }
   .brand-name {
     font-size: .95rem; font-weight: 800;
     color: #f0fdf4; letter-spacing: -.01em;
@@ -131,6 +160,19 @@
     color: #6ee7b7; opacity: .6;
     text-transform: uppercase; letter-spacing: .08em;
   }
+
+  /* Close button — mobile only */
+  .sidebar-close-btn {
+    display: none;
+    margin-left: auto; flex-shrink: 0;
+    background: rgba(110,231,183,.08);
+    border: 1px solid rgba(110,231,183,.15);
+    border-radius: 8px; padding: 6px;
+    cursor: pointer; color: #6ee7b7;
+    align-items: center; justify-content: center;
+    transition: background .15s;
+  }
+  .sidebar-close-btn:hover { background: rgba(110,231,183,.15); }
 
   /* ── Section label ── */
   .nav-section-label {
@@ -145,38 +187,25 @@
 
   .nav-item {
     display: flex; align-items: center; gap: 10px;
-    padding: 10px 12px;
-    border-radius: 8px;
+    padding: 10px 12px; border-radius: 8px;
     color: rgba(167,243,208,.55);
     font-size: .855rem; font-weight: 500;
     transition: background .15s, color .15s;
-    text-decoration: none;
-    margin-bottom: 2px;
+    text-decoration: none; margin-bottom: 2px;
     position: relative;
   }
-  .nav-item:hover {
-    background: rgba(110,231,183,.07);
-    color: #a7f3d0;
-    text-decoration: none;
-  }
-  .nav-item.active {
-    background: rgba(110,231,183,.12);
-    color: #6ee7b7;
-    font-weight: 700;
-  }
+  .nav-item:hover { background: rgba(110,231,183,.07); color: #a7f3d0; text-decoration: none; }
+  .nav-item.active { background: rgba(110,231,183,.12); color: #6ee7b7; font-weight: 700; }
 
   .nav-icon {
     width: 20px; display: flex; align-items: center;
-    justify-content: center; flex-shrink: 0;
-    opacity: .8;
+    justify-content: center; flex-shrink: 0; opacity: .8;
   }
   .nav-item.active .nav-icon { opacity: 1; }
   .nav-label { flex: 1; }
 
-  /* right-side active dot */
   .active-indicator {
-    width: 6px; height: 6px;
-    border-radius: 50%;
+    width: 6px; height: 6px; border-radius: 50%;
     background: #34d399;
     box-shadow: 0 0 6px rgba(52,211,153,.6);
     flex-shrink: 0;
@@ -189,10 +218,31 @@
     margin-top: auto;
   }
   .sidebar-version {
-    font-size: .68rem;
-    color: rgba(110,231,183,.25);
-    font-weight: 500;
+    font-size: .68rem; color: rgba(110,231,183,.25); font-weight: 500;
   }
 
-  @media (max-width: 768px) { .sidebar { display: none; } }
+  /* ══════════════════════════════════
+     RESPONSIVE
+  ══════════════════════════════════ */
+  @media (max-width: 768px) {
+    /* Sidebar slides in from left */
+    .sidebar {
+      transform: translateX(-100%);
+      width: 260px;
+      box-shadow: none;
+    }
+    .sidebar.open {
+      transform: translateX(0);
+      box-shadow: 4px 0 32px rgba(0,0,0,.5);
+    }
+
+    /* Show overlay when open */
+    .sidebar-overlay { display: block; }
+
+    /* Show close button inside sidebar */
+    .sidebar-close-btn { display: flex; }
+
+    /* Nav items slightly larger touch target */
+    .nav-item { padding: 12px 14px; font-size: .9rem; }
+  }
 </style>

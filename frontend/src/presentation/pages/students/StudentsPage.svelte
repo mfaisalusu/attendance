@@ -370,4 +370,34 @@
     background: rgba(248,113,113,.15);
     box-shadow: 0 2px 10px rgba(248,113,113,.1);
   }
+
+  /* ── Responsive ── */
+
+  /* Tablet (≤ 768px) */
+  @media (max-width: 768px) {
+    .filter-count { display: none; } /* count shown in header instead */
+    .header-left h1 { font-size: 1.15rem; }
+    /* Hide class-name text, keep badge */
+    .class-name { display: none; }
+  }
+
+  /* Mobile (≤ 580px) */
+  @media (max-width: 580px) {
+    /* Hide # column */
+    .td-num, thead th:first-child { display: none; }
+
+    /* Action buttons: icon-only */
+    .action-btn { padding: 6px 8px; margin-left: 4px; }
+    .action-btn span, .action-edit svg ~ *, .action-delete svg ~ * { }
+
+    /* Hide NIP column on very small */
+    .nip-badge { font-size: .7rem; padding: 2px 6px; }
+  }
+
+  /* Mobile (≤ 440px) */
+  @media (max-width: 440px) {
+    /* Stack avatar + name vertically if needed, keep row compact */
+    .td-name { gap: 7px; }
+    .student-avatar { width: 26px; height: 26px; font-size: .65rem; }
+  }
 </style>
