@@ -22,6 +22,15 @@ class MasterItem
         $name = (string) $row['name'];
         unset($row['id'], $row['name']);
 
+        // Cast known integer fields — PDO may return INT columns as strings
+        // depending on the driver version or emulate-prepares setting.
+        $intFields = ['department_id', 'semester_id', 'year', 'user_id'];
+        foreach ($intFields as $field) {
+            if (array_key_exists($field, $row)) {
+                $row[$field] = (int) $row[$field];
+            }
+        }
+
         return new self($id, $name, $row);
     }
 
