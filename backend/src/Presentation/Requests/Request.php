@@ -9,10 +9,12 @@ class Request
     private array $body   = [];
     private array $query  = [];
     private array $params = [];
+    private array $files  = [];
 
     public function __construct()
     {
         $this->query = $_GET ?? [];
+        $this->files = $_FILES ?? [];
 
         $contentType = $_SERVER['CONTENT_TYPE'] ?? '';
 
@@ -84,10 +86,38 @@ class Request
 
     public function bearerToken(): ?string
     {
+        // 1. Standard Authorization header
         $auth = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
         if (str_starts_with($auth, 'Bearer ')) {
             return substr($auth, 7);
         }
+
+        // 2. Query string fallback — used for direct file links (download/view/content)
+        //    where setting a request header is not possible (e.g. <a href>, fetch without proxy)
+        $queryToken = $_GET['token'] ?? null;
+        if ($queryToken !== null && $queryToken !== '' && $queryToken !== 'null') {
+            return $queryToken;
+        }
+
         return null;
+    }
+
+    // ------------------------------------------------------------------
+    // File uploads
+    // ------------------------------------------------------------------
+
+    public function file(string $key): ?array
+    {
+        return $this->files[$key] ?? null;
+    }
+
+    public function hasFile(string $key): bool
+    {
+        return isset($this->files[$key]) && $this->files[$key]['error'] === UPLOAD_ERR_OK;
+    }
+
+    public function allFiles(): array
+    {
+        return $this->files;
     }
 }

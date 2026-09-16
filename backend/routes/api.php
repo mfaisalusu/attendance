@@ -70,3 +70,15 @@ $router->put( '/api/attendance/{id}',  [$attendanceController, 'update'], $auth)
 // Dashboard route (protected)
 // ----------------------------------------------------------------
 $router->get('/api/dashboard', [new App\Presentation\Controllers\DashboardController(), 'index'], $auth);
+
+// ----------------------------------------------------------------
+// Material routes (protected)
+// ----------------------------------------------------------------
+$materialController = new App\Presentation\Controllers\MaterialController();
+
+$router->get( '/api/materials',           [$materialController, 'index'],    $auth);
+$router->post('/api/materials',           [$materialController, 'store'],    $auth);
+$router->delete('/api/materials/{id}',    [$materialController, 'destroy'],  $auth);
+$router->get( '/api/materials/download/{id}', [$materialController, 'download'], $auth);
+$router->get( '/api/materials/view/{id}',    [$materialController, 'view'],    $auth);
+$router->get( '/api/materials/content/{id}', [$materialController, 'content'], $auth);

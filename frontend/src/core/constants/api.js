@@ -41,4 +41,11 @@ export const ENDPOINTS = {
 
   // Dashboard
   dashboard: `${API_BASE}/dashboard`,
+
+  // Materials
+  materials:        `${API_BASE}/materials`,
+  material:       (id) => `${API_BASE}/materials/${id}`,
+  materialDownload: (id) => `${API_BASE}/materials/download/${id}`,
+  materialView:     (id) => `${API_BASE}/materials/view/${id}`,
+  materialContent:  (id) => `${API_BASE}/materials/content/${id}`,
 };

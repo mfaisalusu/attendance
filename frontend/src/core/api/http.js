@@ -20,8 +20,9 @@ async function request(url, options = {}) {
   const { skipAuthRedirect = false, ...fetchOptions } = options;
 
   const token = getToken();
+  const isFormData = fetchOptions.body instanceof FormData;
   const headers = {
-    'Content-Type': 'application/json',
+    ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
     ...fetchOptions.headers,
   };
@@ -61,7 +62,7 @@ async function request(url, options = {}) {
 
 export const http = {
   get:    (url)                       => request(url, { method: 'GET' }),
-  post:   (url, body, opts = {})      => request(url, { method: 'POST',   body: JSON.stringify(body), ...opts }),
+  post:   (url, body, opts = {})      => request(url, { method: 'POST',   body: body instanceof FormData ? body : JSON.stringify(body), ...opts }),
   put:    (url, body, opts = {})      => request(url, { method: 'PUT',    body: JSON.stringify(body), ...opts }),
   delete: (url)                       => request(url, { method: 'DELETE' }),
 };

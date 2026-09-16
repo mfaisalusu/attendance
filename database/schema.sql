@@ -160,3 +160,24 @@ CREATE TABLE IF NOT EXISTS `attendance` (
     CONSTRAINT `fk_attendance_student` FOREIGN KEY (`student_id`) REFERENCES `students` (`id`) ON DELETE CASCADE,
     CONSTRAINT `fk_attendance_course`  FOREIGN KEY (`course_id`)  REFERENCES `courses`  (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ------------------------------------------------------------
+-- Table: course_materials (Materi Mata Kuliah)
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS `course_materials` (
+    `id`            INT UNSIGNED    NOT NULL AUTO_INCREMENT,
+    `user_id`       INT UNSIGNED    NOT NULL,
+    `course_id`     INT UNSIGNED    NOT NULL,
+    `meeting_name`  VARCHAR(150)    NOT NULL,
+    `file_path`     VARCHAR(500)    NOT NULL,
+    `file_name`     VARCHAR(255)    NOT NULL,
+    `file_size`     INT UNSIGNED    NOT NULL DEFAULT 0,
+    `mime_type`     VARCHAR(100)    NULL,
+    `created_at`    DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `updated_at`    DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`),
+    KEY `idx_mat_user_id`   (`user_id`),
+    KEY `idx_mat_course_id` (`course_id`),
+    CONSTRAINT `fk_mat_user`   FOREIGN KEY (`user_id`)   REFERENCES `users`   (`id`) ON DELETE CASCADE,
+    CONSTRAINT `fk_mat_course` FOREIGN KEY (`course_id`) REFERENCES `courses` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
