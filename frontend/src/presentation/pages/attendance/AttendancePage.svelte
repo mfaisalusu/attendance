@@ -1,6 +1,7 @@
 <script>
   import { onMount, tick } from 'svelte';
   import AppLayout from '../../layouts/AppLayout.svelte';
+  import CustomSelect from '../../components/common/CustomSelect.svelte';
   import Toast     from '../../components/common/Toast.svelte';
   import { attendanceApi } from '../../../infrastructure/api/attendanceApi.js';
   import { masterService }  from '../../../application/services/masterService.js';
@@ -17,6 +18,10 @@
   let saving         = false;
   let error          = '';
   let statusMap      = {};
+
+  $: classOptions = classes.map(cl => ({ value: String(cl.id), label: `${cl.code} — ${cl.name}` }));
+  $: coursesForClass = allCourses.filter(c => c.class_id === Number(classId));
+  $: courseOptions = coursesForClass.map(c => ({ value: String(c.id), label: `${c.code} — ${c.name}` }));
 
   let toastMsg = '', toastType = 'success', toastVisible = false;
   function showToast(msg, type = 'success') { toastMsg = msg; toastType = type; toastVisible = true; }
@@ -163,24 +168,25 @@
         <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
         Kelas
       </label>
-      <select id="a-class" class="form-control" bind:value={classId} on:change={onClassChange}>
-        <option value="" disabled>Pilih kelas</option>
-        {#each classes as cl}
-          <option value={String(cl.id)}>{cl.code} — {cl.name}</option>
-        {/each}
-      </select>
+      <CustomSelect
+        id="a-class"
+        bind:value={classId}
+        options={classOptions}
+        on:change={onClassChange}
+      />
     </div>
     <div class="form-group">
       <label for="a-course">
         <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
         Mata Kuliah
       </label>
-      <select id="a-course" class="form-control" bind:value={courseId}
-        on:change={loadAttendance} disabled={!classId || coursesForClass.length === 0}>
-        {#each coursesForClass as c}
-          <option value={String(c.id)}>{c.code} — {c.name}</option>
-        {/each}
-      </select>
+      <CustomSelect
+        id="a-course"
+        bind:value={courseId}
+        options={courseOptions}
+        disabled={!classId || coursesForClass.length === 0}
+        on:change={loadAttendance}
+      />
       {#if classId && coursesForClass.length === 0}
         <small class="hint-text">Tidak ada mata kuliah untuk kelas ini.</small>
       {/if}

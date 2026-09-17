@@ -3,6 +3,7 @@
   import AppLayout          from '../../layouts/AppLayout.svelte';
   import ConfirmModal       from '../../components/common/ConfirmModal.svelte';
   import MaterialViewerModal from '../../components/common/MaterialViewerModal.svelte';
+  import CustomSelect       from '../../components/common/CustomSelect.svelte';
   import Toast              from '../../components/common/Toast.svelte';
   import { materialApi }    from '../../../infrastructure/api/materialApi.js';
   import { masterService }  from '../../../application/services/masterService.js';
@@ -13,6 +14,8 @@
   let pagination  = { page: 1, total_pages: 1, total: 0, limit: 20 };
   let loading     = true;
   let error       = '';
+
+  $: courseOptions = courses.map(c => ({ value: String(c.id), label: `${c.code} — ${c.name}` }));
 
   // Form state
   let showForm    = false;
@@ -200,11 +203,12 @@
         </svg>
         Mata Kuliah
       </label>
-      <select id="course-select" class="form-control" bind:value={selectedCourseId} on:change={onCourseChange}>
-        {#each courses as c}
-          <option value={String(c.id)}>{c.code} — {c.name}</option>
-        {/each}
-      </select>
+      <CustomSelect
+        id="course-select"
+        bind:value={selectedCourseId}
+        options={courseOptions}
+        on:change={onCourseChange}
+      />
     </div>
   </div>
 
@@ -346,7 +350,6 @@
                       <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
                       <circle cx="12" cy="12" r="3"/>
                     </svg>
-                    Lihat
                   </button>
                   <a
                     href={materialApi.download(m.id)}
@@ -359,7 +362,6 @@
                       <polyline points="7 10 12 15 17 10"/>
                       <line x1="12" y1="15" x2="12" y2="3"/>
                     </svg>
-                    Download
                   </a>
                   <button class="action-btn action-delete" on:click={() => confirmDelete(m.id)} title="Hapus">
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
@@ -367,7 +369,6 @@
                       <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
                       <path d="M10 11v6"/><path d="M14 11v6"/>
                     </svg>
-                    Hapus
                   </button>
                 </td>
               </tr>
@@ -503,11 +504,13 @@
     font-size: .78rem; font-weight: 500; color: #60a5fa;
   }
 
-  /* ── Action buttons ── */
+  /* ── Action buttons (icon-only) ── */
   .td-actions { text-align: right; white-space: nowrap; }
   .action-btn {
-    display: inline-flex; align-items: center; gap: 5px;
-    padding: 5px 11px; border-radius: 7px;
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 32px; height: 32px;
+    padding: 0;
+    border-radius: 7px;
     font-size: .775rem; font-weight: 600; cursor: pointer;
     border: 1px solid transparent; font-family: inherit;
     transition: background .15s, box-shadow .15s, transform .1s;
@@ -553,6 +556,11 @@
   @media (max-width: 580px) {
     .td-num, thead th:first-child { display: none; }
     .file-badge { font-size: .7rem; padding: 2px 6px; }
-    .td-size, .td-date { display: none; }
+    .td-size, .td-date { 
+      font-size: .75rem;
+      color: #6b7280;
+    }
+    thead th:nth-child(4),
+    thead th:nth-child(5) { font-size: .7rem; }
   }
 </style>

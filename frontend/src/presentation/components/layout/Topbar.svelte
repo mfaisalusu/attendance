@@ -1,11 +1,13 @@
 <script>
-  import { getUser } from '../../../core/auth/authStore.js';
+  import { getUser, isAdmin } from '../../../core/auth/authStore.js';
   import { authService } from '../../../application/services/authService.js';
 
   export let toggleSidebar = () => {};
 
   const user = getUser();
   let loggingOut = false;
+
+  $: userRole = isAdmin() ? 'Dosen' : 'Mahasiswa';
 
   async function handleLogout() {
     loggingOut = true;
@@ -45,7 +47,7 @@
         <div class="user-avatar">{getInitials(user.name)}</div>
         <div class="user-info">
           <span class="user-name">{user.name}</span>
-          <span class="user-role">Dosen</span>
+          <span class="user-role">{userRole}</span>
         </div>
       </div>
     {/if}

@@ -17,6 +17,15 @@ export function getUser() {
   }
 }
 
+export function getRole() {
+  const user = getUser();
+  return user?.role ?? 'student';
+}
+
+export function isAdmin() {
+  return getRole() === 'admin';
+}
+
 export function setAuth(token, user) {
   localStorage.setItem(TOKEN_KEY, token);
   localStorage.setItem(USER_KEY, JSON.stringify(user));

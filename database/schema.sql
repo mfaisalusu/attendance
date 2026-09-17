@@ -17,11 +17,13 @@ CREATE TABLE IF NOT EXISTS `users` (
     `name`              VARCHAR(100)    NOT NULL,
     `email`             VARCHAR(150)    NOT NULL,
     `password`          VARCHAR(255)    NOT NULL,
+    `role`              ENUM('admin','student') NOT NULL DEFAULT 'student',
     `email_verified_at` DATETIME        NULL DEFAULT NULL,
     `created_at`        DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `updated_at`        DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (`id`),
-    UNIQUE KEY `uq_users_email` (`email`)
+    UNIQUE KEY `uq_users_email` (`email`),
+    KEY `idx_users_role` (`role`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ------------------------------------------------------------

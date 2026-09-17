@@ -11,6 +11,7 @@ class User
         public readonly string  $name,
         public readonly string  $email,
         public readonly string  $password,
+        public readonly string  $role,
         public readonly ?string $emailVerifiedAt,
         public readonly string  $createdAt,
         public readonly string  $updatedAt,
@@ -23,6 +24,7 @@ class User
             name:            $row['name'],
             email:           $row['email'],
             password:        $row['password'],
+            role:            $row['role'] ?? 'student',
             emailVerifiedAt: $row['email_verified_at'] ?? null,
             createdAt:       $row['created_at'],
             updatedAt:       $row['updated_at'],
@@ -35,6 +37,7 @@ class User
             'id'                => $this->id,
             'name'              => $this->name,
             'email'             => $this->email,
+            'role'              => $this->role,
             'email_verified_at' => $this->emailVerifiedAt,
             'created_at'        => $this->createdAt,
         ];

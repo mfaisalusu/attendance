@@ -14,6 +14,7 @@
   let loading      = false;
   let errorMsg     = '';
   let contentEl;  // bind:this on the scrollable content div
+  let isFullscreen = false;
 
   // Load whenever material changes and modal is visible
   $: if (visible && material) {
@@ -72,6 +73,11 @@
 
   function close() {
     visible = false;
+    isFullscreen = false;
+  }
+
+  function toggleFullscreen() {
+    isFullscreen = !isFullscreen;
   }
 
   // Close on Escape key
@@ -90,7 +96,7 @@
 {#if visible}
   <!-- svelte-ignore a11y-click-events-have-key-events a11y-no-static-element-interactions -->
   <div class="viewer-backdrop" role="presentation" on:click|self={close}>
-    <div class="viewer-modal" role="dialog" aria-modal="true" aria-labelledby="viewer-title">
+    <div class="viewer-modal" class:viewer-modal-fullscreen={isFullscreen} role="dialog" aria-modal="true" aria-labelledby="viewer-title">
 
       <!-- ── Header ── -->
       <div class="viewer-header">
@@ -106,12 +112,25 @@
             <span class="viewer-filename">{material?.file_name ?? ''}</span>
           </div>
         </div>
-        <button class="viewer-close" on:click={close} aria-label="Tutup">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-            <line x1="18" y1="6" x2="6" y2="18"/>
-            <line x1="6" y1="6" x2="18" y2="18"/>
-          </svg>
-        </button>
+        <div class="viewer-header-actions">
+          <button class="viewer-action-btn" on:click={toggleFullscreen} aria-label={isFullscreen ? 'Keluar layar penuh' : 'Layar penuh'} title={isFullscreen ? 'Keluar layar penuh' : 'Layar penuh'}>
+            {#if isFullscreen}
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                <path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"/>
+              </svg>
+            {:else}
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
+              </svg>
+            {/if}
+          </button>
+          <button class="viewer-action-btn viewer-close-btn" on:click={close} aria-label="Tutup" title="Tutup">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <line x1="18" y1="6" x2="6" y2="18"/>
+              <line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+        </div>
       </div>
 
       <!-- ── Body ── -->
@@ -195,6 +214,13 @@
     max-height: 900px;
     overflow: hidden;
     animation: slideUp .18s ease;
+    transition: max-width .2s ease, height .2s ease, border-radius .2s ease;
+  }
+  .viewer-modal-fullscreen {
+    max-width: 100%;
+    height: 100vh;
+    max-height: 100vh;
+    border-radius: 0;
   }
   @keyframes slideUp {
     from { transform: translateY(16px); opacity: 0; }
@@ -233,19 +259,28 @@
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     display: block;
   }
-  .viewer-close {
+  .viewer-header-actions {
+    display: flex; align-items: center; gap: 6px;
+  }
+  .viewer-action-btn {
     width: 32px; height: 32px; border-radius: 8px; flex-shrink: 0;
     background: rgba(255,255,255,.04);
     border: 1px solid rgba(255,255,255,.08);
     color: #9ca3af; cursor: pointer;
     display: flex; align-items: center; justify-content: center;
-    transition: background .15s, color .15s;
+    transition: background .15s, color .15s, border-color .15s;
   }
-  .viewer-close:hover {
+  .viewer-action-btn:hover {
+    background: rgba(110,231,183,.1);
+    border-color: rgba(110,231,183,.2);
+    color: #6ee7b7;
+  }
+  .viewer-close-btn:hover {
     background: rgba(248,113,113,.1);
     border-color: rgba(248,113,113,.2);
     color: #f87171;
   }
+  /* .viewer-close replaced by .viewer-action-btn and .viewer-close-btn */
 
   /* ── Body (scrollable) ── */
   .viewer-body {

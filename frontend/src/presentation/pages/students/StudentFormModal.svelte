@@ -1,5 +1,6 @@
 <script>
   import { onMount } from 'svelte';
+  import CustomSelect from '../../components/common/CustomSelect.svelte';
   import { masterService } from '../../../application/services/masterService.js';
   import { studentApi }    from '../../../infrastructure/api/studentApi.js';
 
@@ -16,6 +17,8 @@
   function defaultForm() { return { nip: '', name: '', class_id: '' }; }
 
   onMount(async () => { classes = await masterService.getClasses(); });
+
+  $: classOptions = classes.map(cl => ({ value: String(cl.id), label: `${cl.code} — ${cl.name}` }));
 
   $: if (visible) {
     error       = '';
@@ -100,14 +103,14 @@
 
           <div class="form-group">
             <label for="f-class">Kelas</label>
-            <select id="f-class" class="form-control"
-              class:is-invalid={fieldErrors.class_id}
-              bind:value={form.class_id} required>
-              <option value="" disabled>Pilih kelas</option>
-              {#each classes as cl}
-                <option value={cl.id}>{cl.code} — {cl.name}</option>
-              {/each}
-            </select>
+            <div class:is-invalid={fieldErrors.class_id}>
+              <CustomSelect
+                id="f-class"
+                bind:value={form.class_id}
+                options={classOptions}
+                placeholder="Pilih kelas"
+              />
+            </div>
             {#if fieldErrors.class_id}
               <span class="invalid-feedback">{fieldErrors.class_id[0]}</span>
             {/if}

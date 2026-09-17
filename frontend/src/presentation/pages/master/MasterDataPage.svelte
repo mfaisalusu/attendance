@@ -2,6 +2,7 @@
   import { onMount } from 'svelte';
   import AppLayout    from '../../layouts/AppLayout.svelte';
   import ConfirmModal from '../../components/common/ConfirmModal.svelte';
+  import CustomSelect from '../../components/common/CustomSelect.svelte';
   import Toast        from '../../components/common/Toast.svelte';
   import { masterService } from '../../../application/services/masterService.js';
 
@@ -29,6 +30,10 @@
   let formSemesterId   = '';
   let formYear         = '';
   let formCourseIds    = [];
+
+  $: departmentOptions = departments.map(d => ({ value: String(d.id), label: `${d.code} — ${d.name}` }));
+  $: semesterOptions = semesters.map(s => ({ value: String(s.id), label: s.name }));
+  $: yearOptions = years.map(y => ({ value: String(y.id), label: y.name }));
   let formError        = '', formLoading = false;
 
   // ── Delete ────────────────────────────────────────────────────────
@@ -396,10 +401,12 @@
           {#if activeTab === 'courses'}
             <div class="form-group">
               <label for="f-dept">Jurusan</label>
-              <select id="f-dept" class="form-control" bind:value={formDepartmentId} required>
-                <option value="" disabled>Pilih jurusan</option>
-                {#each departments as d}<option value={d.id}>{d.code} — {d.name}</option>{/each}
-              </select>
+              <CustomSelect
+                id="f-dept"
+                bind:value={formDepartmentId}
+                options={departmentOptions}
+                placeholder="Pilih jurusan"
+              />
             </div>
           {/if}
 
@@ -407,10 +414,12 @@
           {#if activeTab === 'classes'}
             <div class="form-group">
               <label for="f-cdept">Jurusan</label>
-              <select id="f-cdept" class="form-control" bind:value={formClassDeptId} required>
-                <option value="" disabled>Pilih jurusan</option>
-                {#each departments as d}<option value={d.id}>{d.code} — {d.name}</option>{/each}
-              </select>
+              <CustomSelect
+                id="f-cdept"
+                bind:value={formClassDeptId}
+                options={departmentOptions}
+                placeholder="Pilih jurusan"
+              />
             </div>
           {/if}
 
@@ -446,17 +455,21 @@
             <div class="form-row">
               <div class="form-group">
                 <label for="f-sem">Semester</label>
-                <select id="f-sem" class="form-control" bind:value={formSemesterId} required>
-                  <option value="" disabled>Pilih semester</option>
-                  {#each semesters as s}<option value={s.id}>{s.name}</option>{/each}
-                </select>
+                <CustomSelect
+                  id="f-sem"
+                  bind:value={formSemesterId}
+                  options={semesterOptions}
+                  placeholder="Pilih semester"
+                />
               </div>
               <div class="form-group">
                 <label for="f-year">Tahun</label>
-                <select id="f-year" class="form-control" bind:value={formYear} required>
-                  <option value="" disabled>Pilih tahun</option>
-                  {#each years as y}<option value={y.id}>{y.name}</option>{/each}
-                </select>
+                <CustomSelect
+                  id="f-year"
+                  bind:value={formYear}
+                  options={yearOptions}
+                  placeholder="Pilih tahun"
+                />
               </div>
             </div>
 

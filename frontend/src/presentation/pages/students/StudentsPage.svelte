@@ -3,6 +3,7 @@
   import AppLayout        from '../../layouts/AppLayout.svelte';
   import Pagination       from '../../components/common/Pagination.svelte';
   import ConfirmModal     from '../../components/common/ConfirmModal.svelte';
+  import CustomSelect     from '../../components/common/CustomSelect.svelte';
   import Toast            from '../../components/common/Toast.svelte';
   import StudentFormModal from './StudentFormModal.svelte';
   import { studentApi }   from '../../../infrastructure/api/studentApi.js';
@@ -16,6 +17,11 @@
   let classes  = [];
   let classId  = '';
   let search   = '';
+
+  $: classOptions = [
+    { value: '', label: 'Semua Kelas' },
+    ...classes.map(cl => ({ value: String(cl.id), label: `${cl.code} — ${cl.name}` }))
+  ];
 
   let showForm       = false;
   let editingStudent = null;
@@ -126,12 +132,12 @@
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
         Kelas
       </label>
-      <select id="s-class" class="form-control" bind:value={classId} on:change={() => loadStudents(1)}>
-        <option value="">Semua Kelas</option>
-        {#each classes as cl}
-          <option value={String(cl.id)}>{cl.code} — {cl.name}</option>
-        {/each}
-      </select>
+      <CustomSelect
+        id="s-class"
+        bind:value={classId}
+        options={classOptions}
+        on:change={() => loadStudents(1)}
+      />
     </div>
 
     {#if !loading}

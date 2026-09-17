@@ -174,8 +174,8 @@ a:hover { color: var(--green-emerald); text-decoration: underline; }
 }
 .form-control.is-invalid { border-color: var(--danger); }
 .invalid-feedback { color: var(--danger); font-size: .78rem; }
-select.form-control { cursor: pointer; }
-select.form-control option { background: var(--bg-surface); }
+select.form-control { cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2.5' stroke-linecap='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 36px; }
+select.form-control option { background: #111827; color: #f9fafb; padding: 8px; }
 
 /* ════════════════════════════════════════
    CARD

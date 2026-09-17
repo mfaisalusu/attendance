@@ -1,16 +1,32 @@
 <script>
+  import { isAdmin } from '../../../core/auth/authStore.js';
+
   export let currentPath  = '/';
   export let sidebarOpen  = false;
   export let closeSidebar = () => {};
 
-  const navItems = [
-    { path: '/dashboard',        label: 'Dashboard',     icon: 'dashboard', exact: true  },
-    { path: '/students',         label: 'Mahasiswa',     icon: 'students',  exact: false },
-    { path: '/materials',        label: 'Mata Kuliah',   icon: 'materials', exact: true  },
-    { path: '/attendance',       label: 'Absensi',       icon: 'attendance',exact: true  },
-    { path: '/attendance/recap', label: 'Rekap Absensi', icon: 'recap',     exact: false },
-    { path: '/master',           label: 'Master Data',   icon: 'master',    exact: false },
+  const allNavItems = [
+    { path: '/dashboard',        label: 'Dashboard',     icon: 'dashboard', exact: true,  roles: ['admin'] },
+    { path: '/students',         label: 'Mahasiswa',     icon: 'students',  exact: false, roles: ['admin'] },
+    { path: '/materials',        label: 'Mata Kuliah',   icon: 'materials', exact: true,  roles: ['admin', 'student'] },
+    { path: '/attendance',       label: 'Absensi',       icon: 'attendance',exact: true,  roles: ['admin'] },
+    { path: '/attendance/recap', label: 'Rekap Absensi', icon: 'recap',     exact: false, roles: ['admin'] },
+    { path: '/master',           label: 'Master Data',   icon: 'master',    exact: false, roles: ['admin'] },
   ];
+
+  $: navItems = allNavItems.filter(item => {
+    const userIsAdmin = isAdmin();
+    if (item.roles.includes('admin') && item.roles.includes('student')) {
+      return true; // Both can access
+    }
+    if (item.roles.includes('admin')) {
+      return userIsAdmin;
+    }
+    if (item.roles.includes('student')) {
+      return !userIsAdmin;
+    }
+    return false;
+  });
 
   function isActive(item) {
     if (item.exact) return currentPath === item.path;

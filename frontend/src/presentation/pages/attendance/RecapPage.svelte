@@ -1,6 +1,7 @@
 <script>
   import { onMount, tick } from 'svelte';
   import AppLayout from '../../layouts/AppLayout.svelte';
+  import CustomSelect from '../../components/common/CustomSelect.svelte';
   import { attendanceApi } from '../../../infrastructure/api/attendanceApi.js';
   import { masterService }  from '../../../application/services/masterService.js';
   import { monthName }      from '../../../core/utils/format.js';
@@ -23,6 +24,12 @@
   let hasSearched = false;
 
   const months = Array.from({ length: 12 }, (_, i) => ({ value: i + 1, label: monthName(i + 1) }));
+
+  $: classOptions = classes.map(cl => ({ value: String(cl.id), label: `${cl.code} — ${cl.name}` }));
+  $: coursesForClass = allCourses.filter(c => c.class_id === Number(classId));
+  $: courseOptions = coursesForClass.map(c => ({ value: String(c.id), label: `${c.code} — ${c.name}` }));
+  $: yearOptions = years.map(y => ({ value: y.id, label: y.name }));
+  $: monthOptions = months;
 
   onMount(async () => {
     [classes, allCourses, years] = await Promise.all([
@@ -130,12 +137,12 @@
           <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
           Kelas
         </label>
-        <select id="r-class" class="form-control" bind:value={classId} on:change={onClassChange}>
-          <option value="" disabled>Pilih kelas</option>
-          {#each classes as cl}
-            <option value={String(cl.id)}>{cl.code} — {cl.name}</option>
-          {/each}
-        </select>
+        <CustomSelect
+          id="r-class"
+          bind:value={classId}
+          options={classOptions}
+          on:change={onClassChange}
+        />
       </div>
 
       <div class="form-group">
@@ -143,12 +150,12 @@
           <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
           Mata Kuliah
         </label>
-        <select id="r-course" class="form-control" bind:value={courseId}
-          disabled={!classId || coursesForClass.length === 0}>
-          {#each coursesForClass as c}
-            <option value={String(c.id)}>{c.code} — {c.name}</option>
-          {/each}
-        </select>
+        <CustomSelect
+          id="r-course"
+          bind:value={courseId}
+          options={courseOptions}
+          disabled={!classId || coursesForClass.length === 0}
+        />
         {#if classId && coursesForClass.length === 0}
           <small class="hint-text">Tidak ada mata kuliah untuk kelas ini.</small>
         {/if}
@@ -159,11 +166,11 @@
           <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
           Bulan
         </label>
-        <select id="r-month" class="form-control" bind:value={month}>
-          {#each months as m}
-            <option value={m.value}>{m.label}</option>
-          {/each}
-        </select>
+        <CustomSelect
+          id="r-month"
+          bind:value={month}
+          options={monthOptions}
+        />
       </div>
 
       <div class="form-group">
@@ -171,11 +178,11 @@
           <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
           Tahun
         </label>
-        <select id="r-year" class="form-control" bind:value={year}>
-          {#each years as y}
-            <option value={y.id}>{y.name}</option>
-          {/each}
-        </select>
+        <CustomSelect
+          id="r-year"
+          bind:value={year}
+          options={yearOptions}
+        />
       </div>
     </div>
 
